@@ -614,6 +614,6 @@ export default function MemberProfile() {
       <LogVisitModal          open={visitModal} onClose={() => setVis(false)} member={member} workerId={user?.id} onSave={handleLogVisit} />
       <RecordIshtabhritiModal open={ishModal}   onClose={() => setIsh(false)} member={member} workerId={user?.id} onSave={recordPayment} />
       <RemoveModal      open={rmModal}    onClose={() => setRm(false)}  member={member} onConfirm={handleRemove} />
-    </>
+    </div>
   );
 }
