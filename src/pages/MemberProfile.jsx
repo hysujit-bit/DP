@@ -92,12 +92,25 @@ function CategoryStepper({ current }) {
 
 function LogVisitModal({ open, onClose, member, workerId, onSave }) {
   const [form, setForm] = useState({ visitDate: new Date().toISOString().split('T')[0], notes: '', outcome: '', nextAction: '' });
-  const handleSubmit = (e) => {
+  const [saving, setSaving] = useState(false);
+  const [saved,  setSaved]  = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({ ...form, personId: member.id, visitedBy: workerId });
-    onClose();
-    setForm({ visitDate: new Date().toISOString().split('T')[0], notes: '', outcome: '', nextAction: '' });
+    setSaving(true);
+    try {
+      await onSave({ ...form, personId: member.id, visitedBy: workerId });
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        onClose();
+        setForm({ visitDate: new Date().toISOString().split('T')[0], notes: '', outcome: '', nextAction: '' });
+      }, 1000);
+    } catch {
+      setSaving(false);
+    }
   };
+
   return (
     <Modal open={open} onClose={onClose} title={`Log Visit — ${member?.name}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -123,7 +136,14 @@ function LogVisitModal({ open, onClose, member, workerId, onSave }) {
           <input type="text" value={form.nextAction} onChange={e => setForm({...form, nextAction: e.target.value})}
             placeholder="What to do next time?" className="input" />
         </div>
-        <button type="submit" className="w-full bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2.5 rounded-xl">Save Visit</button>
+        <button type="submit" disabled={saving || saved}
+          className={`w-full font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 ${
+            saved  ? 'bg-green-500 text-white' :
+            saving ? 'bg-sky-300 text-white cursor-not-allowed' :
+                     'bg-sky-500 hover:bg-sky-700 text-white'
+          }`}>
+          {saved ? '✓ Visit Saved!' : saving ? 'Saving…' : 'Save Visit'}
+        </button>
       </form>
     </Modal>
   );
@@ -226,8 +246,8 @@ export default function MemberProfile() {
   };
 
   // Wrap logVisit to auto-detect category change triggers
-  const handleLogVisit = (data) => {
-    logVisit(data);
+  const handleLogVisit = async (data) => {
+    await logVisit(data);
     const trigger = getCategoryChangeTrigger(member.memberCategory, data.outcome);
     if (trigger) setCatPromptTrigger(trigger);
   };
@@ -616,7 +636,7 @@ export default function MemberProfile() {
       </div>
 
       {/* Modals */}
-      <LogVisitModal          open={visitModal} onClose={() => setVis(false)} member={member} workerId={user?.id} onSave={handleLogVisit} />
+      <LogVisitModal          open={visitModal} onClose={() => setVis(false)} member={member} workerId={user?.workerId} onSave={handleLogVisit} />
       <RecordIshtabhritiModal open={ishModal}   onClose={() => setIsh(false)} member={member} workerId={user?.id} onSave={recordPayment} />
       <RemoveModal            open={rmModal}    onClose={() => setRm(false)}  member={member} onRemove={handleRemove} />
       <CategoryPickerModal
