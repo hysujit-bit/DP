@@ -564,7 +564,6 @@ function IshMemberRow({ m, showMark, onMark, onMarkNotSent, navigate, confirmed,
         </div>
       </div>
     );
-  }
 
   if (noWrapper) return inner;
   return inner;
