@@ -22,7 +22,8 @@ function toApp(row) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return preflight();
 
-  try { requireAuth(event); }
+  let caller;
+  try { caller = requireAuth(event); }
   catch { return err('Unauthorised', 401); }
 
   const { sukId, personId } = event.queryStringParameters || {};

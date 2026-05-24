@@ -305,7 +305,7 @@ export default function LogActivity() {
   const retroKeys = Object.keys(drive?.retrospect || {});
   const metCount  = retroKeys.filter(k => drive?.retrospect[k]?.met === true).length;
 
-  const handleRetroUpdate = (memberId, retroData) => {
+  const handleRetroUpdate = async (memberId, retroData) => {
     const existing = drive.retrospect?.[memberId] || {};
     let updatedRetro = { ...retroData };
 
@@ -313,7 +313,7 @@ export default function LogActivity() {
       const outcomeLabel = retroData.outcome || '';
       if (!existing.visitId) {
         // First time marked as met — create a visit record
-        const visit = logVisit({
+        const visit = await logVisit({
           personId:   memberId,
           visitDate:  drive.date,
           visitedBy:  user?.id,

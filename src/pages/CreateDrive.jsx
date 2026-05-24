@@ -201,32 +201,39 @@ export default function CreateDrive() {
     return true;
   };
 
-  const handleQuickAdd = () => {
+  const handleQuickAdd = async () => {
     if (!quickName.trim()) return;
     setQuickAdding(true);
-    const newMember = createMember({
-      name: quickName.trim(),
-      contactNo: quickContact.trim(),
-      memberCategory: 'PROSPECT',
-      sukId: currentSukId,
-      dpStatus: 'FW_PENDING',
-      ishtabhritiStatus: 'IRREGULAR',
-    });
-    setSelectedIds(prev => [...prev, newMember.id]);
-    setQuickName('');
-    setQuickContact('');
-    setShowQuickAdd(false);
-    setQuickAdding(false);
+    try {
+      const newMember = await createMember({
+        name: quickName.trim(),
+        contactNo: quickContact.trim(),
+        memberCategory: 'PROSPECT',
+        sukId: currentSukId,
+        dpStatus: 'FW_PENDING',
+        ishtabhritiStatus: 'IRREGULAR',
+      });
+      setSelectedIds(prev => [...prev, newMember.id]);
+      setQuickName('');
+      setQuickContact('');
+      setShowQuickAdd(false);
+    } finally {
+      setQuickAdding(false);
+    }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setSaving(true);
-    const drive = createDrive({
-      ...form,
-      memberIds: selectedIds,
-      status: 'UPCOMING',
-    });
-    navigate(`/dp-work/${drive.id}`);
+    try {
+      const drive = await createDrive({
+        ...form,
+        memberIds: selectedIds,
+        status: 'UPCOMING',
+      });
+      navigate(`/dp-work/${drive.id}`);
+    } catch {
+      setSaving(false);
+    }
   };
 
   const whatsappMsg = buildWhatsAppMessage(form, selectedMembers, sukName);

@@ -193,8 +193,10 @@ export default function IshtabhritiTimeline({ memberId, memberPayments, startDat
                   <span className={`text-xs whitespace-nowrap leading-tight mt-0.5 ${cfg.labelCls}`}>
                     {cfg.label}
                   </span>
+                  <span className="text-[10px] text-gray-400 whitespace-nowrap leading-none mt-0.5">
+                    {fmtLabel(node.scheduledDate)}
+                  </span>
                 </div>
-
               </div>
             </div>
           );

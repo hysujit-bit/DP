@@ -95,7 +95,7 @@ export default function MySpace() {
 
   // My assigned members (all categories)
   const myMembers = useMemo(() =>
-    members.filter(m => !m.isRemoved && m.assignedTo === user?.id),
+    members.filter(m => !m.isRemoved && m.assignedTo === user?.workerId),
   [members, user]);
 
   // Category breakdown for planning metrics

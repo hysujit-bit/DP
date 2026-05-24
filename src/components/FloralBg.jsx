@@ -138,8 +138,8 @@ export default function FloralBg() {
           100% { transform: translateY(-105vh) rotate(25deg);  opacity: 0;   }
         }
         @keyframes mandalaRotate {
-          from { transform: translate(-50%,-50%) rotate(0deg);   }
-          to   { transform: translate(-50%,-50%) rotate(360deg); }
+          from { transform: translateX(-50%) translateY(-50%) rotate(0deg); }
+          to   { transform: translateX(-50%) translateY(-50%) rotate(360deg); }
         }
       `}</style>
     </>

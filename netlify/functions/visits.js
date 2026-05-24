@@ -24,7 +24,8 @@ function toApp(row) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return preflight();
 
-  try { requireAuth(event); }
+  let caller;
+  try { caller = requireAuth(event); }
   catch { return err('Unauthorised', 401); }
 
   const { id, sukId, personId } = event.queryStringParameters || {};
@@ -68,6 +69,8 @@ exports.handler = async (event) => {
 
       await sql`
         UPDATE visits SET
+          visit_date  = COALESCE(${d.visitDate  ?? null}, visit_date),
+          visited_by  = COALESCE(${d.visitedBy  ?? null}, visited_by),
           outcome     = COALESCE(${d.outcome    ?? null}, outcome),
           notes       = COALESCE(${d.notes      ?? null}, notes),
           next_action = COALESCE(${d.nextAction ?? null}, next_action),

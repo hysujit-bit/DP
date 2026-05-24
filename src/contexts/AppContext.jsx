@@ -122,11 +122,14 @@ export function AppProvider({ children }) {
   };
 
   // ── Members ────────────────────────────────────────────────────────────────
-  const createMember = (data) => {
-    api.createMember({ sukId: currentSukId, ...data }).then(refresh).catch(e => setError(e.message));
+  const createMember = async (data) => {
+    const member = await api.createMember({ sukId: currentSukId, ...data });
+    refresh().catch(e => setError(e.message));
+    return member;
   };
-  const editMember = (id, data) => {
-    api.updateMember(id, data).then(refresh).catch(e => setError(e.message));
+  const editMember = async (id, data) => {
+    await api.updateMember(id, data);
+    refresh().catch(e => setError(e.message));
   };
   const deleteMember = (id, reason) => {
     api.removeMember(id, reason).then(refresh).catch(e => setError(e.message));
@@ -136,8 +139,10 @@ export function AppProvider({ children }) {
   };
 
   // ── Visits ─────────────────────────────────────────────────────────────────
-  const logVisit = (data) => {
-    api.addVisit(data).then(refresh).catch(e => setError(e.message));
+  const logVisit = async (data) => {
+    const visit = await api.addVisit(data);
+    refresh().catch(e => setError(e.message));
+    return visit;
   };
   const editVisit = (id, patch) => {
     api.updateVisit(id, patch).then(refresh).catch(e => setError(e.message));
@@ -167,8 +172,10 @@ export function AppProvider({ children }) {
   };
 
   // ── Drives ─────────────────────────────────────────────────────────────────
-  const createDrive = (data) => {
-    api.addDrive({ sukId: currentSukId, ...data }).then(refresh).catch(e => setError(e.message));
+  const createDrive = async (data) => {
+    const drive = await api.addDrive({ sukId: currentSukId, ...data });
+    refresh().catch(e => setError(e.message));
+    return drive;
   };
   const editDrive = (id, data) => {
     api.updateDrive(id, data).then(refresh).catch(e => setError(e.message));

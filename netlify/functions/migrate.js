@@ -28,11 +28,22 @@ exports.handler = async (event) => {
     )`;
 
     await sql`CREATE TABLE IF NOT EXISTS members (
-      id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT, address TEXT,
-      present_address TEXT, geo_location TEXT,
+      id TEXT PRIMARY KEY, name TEXT NOT NULL, contact_no TEXT, address TEXT,
+      present_address TEXT, permanent_address TEXT, geo_location TEXT,
       member_category TEXT NOT NULL DEFAULT 'PROSPECT',
       suk_id TEXT NOT NULL, assigned_to TEXT REFERENCES workers(id),
       family_code TEXT, ishtabhrity_status TEXT DEFAULT 'UNKNOWN',
+      ishtabhrity_start_date DATE, guardian_name TEXT, ritwik_name TEXT,
+      dp_status TEXT DEFAULT 'FW_PENDING', profession TEXT, area TEXT, pin_code TEXT,
+      has_asthan BOOLEAN DEFAULT FALSE, is_adikshita BOOLEAN DEFAULT FALSE,
+      recently_took_dikhya BOOLEAN DEFAULT FALSE, plays_harmonium BOOLEAN DEFAULT FALSE,
+      spouse_prospect BOOLEAN DEFAULT FALSE, children_prospect BOOLEAN DEFAULT FALSE,
+      interested_in_singing BOOLEAN DEFAULT FALSE, can_help_in_dp_work BOOLEAN DEFAULT FALSE,
+      shares_room BOOLEAN DEFAULT FALSE, stays_in_pg BOOLEAN DEFAULT FALSE,
+      keeps_prayer BOOLEAN DEFAULT FALSE, comes_to_satsang BOOLEAN DEFAULT FALSE,
+      keeps_bhadra_satsang BOOLEAN DEFAULT FALSE, does_dp_work BOOLEAN DEFAULT FALSE,
+      goes_to_temple BOOLEAN DEFAULT FALSE, deoghark_visit BOOLEAN DEFAULT FALSE,
+      swastaini BOOLEAN DEFAULT FALSE, new_in_bengaluru BOOLEAN DEFAULT FALSE,
       is_active BOOLEAN DEFAULT TRUE, removed_reason TEXT, removed_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
     )`;
@@ -79,6 +90,37 @@ exports.handler = async (event) => {
     await sql`ALTER TABLE workers ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'dp_worker'`;
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS suk_id TEXT`;
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+
+    // ── Add new columns to members (idempotent) ───────────────────────────────
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS contact_no TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS permanent_address TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS guardian_name TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS ritwik_name TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS dp_status TEXT DEFAULT 'FW_PENDING'`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS ishtabhrity_start_date DATE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS profession TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS area TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS pin_code TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS has_asthan BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS is_adikshita BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS recently_took_dikhya BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS plays_harmonium BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS spouse_prospect BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS children_prospect BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS interested_in_singing BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS can_help_in_dp_work BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS shares_room BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS stays_in_pg BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS keeps_prayer BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS comes_to_satsang BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS keeps_bhadra_satsang BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS does_dp_work BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS goes_to_temple BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS deoghark_visit BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS swastaini BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS new_in_bengaluru BOOLEAN DEFAULT FALSE`;
+    // Copy legacy phone → contact_no for rows that pre-date this migration
+    await sql`UPDATE members SET contact_no = phone WHERE contact_no IS NULL AND phone IS NOT NULL`;
 
     // ── 2. Upsert workers (fixes suk_ids on re-run) ───────────────────────────
     const workers = [
@@ -147,7 +189,7 @@ exports.handler = async (event) => {
     ];
     for (const m of members) {
       await sql`
-        INSERT INTO members (id, name, phone, address, present_address, geo_location,
+        INSERT INTO members (id, name, contact_no, address, present_address, geo_location,
           member_category, suk_id, assigned_to, family_code, ishtabhrity_status)
         VALUES (${m.id}, ${m.name}, ${m.phone}, ${m.address}, ${m.presentAddress},
           ${m.geoLocation || null}, ${m.memberCategory}, ${m.sukId}, ${m.assignedTo},

@@ -417,7 +417,7 @@ function WorkerDashboard() {
 
   // My members
   const myMembers = useMemo(() =>
-    members.filter(m => !m.isRemoved && m.assignedTo === user?.id),
+    members.filter(m => !m.isRemoved && m.assignedTo === user?.workerId),
   [members, user]);
 
   // My visits this week

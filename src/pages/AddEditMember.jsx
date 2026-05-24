@@ -52,6 +52,7 @@ export default function AddEditMember() {
     ...(precatParam && MEMBER_CATEGORIES[precatParam] ? { memberCategory: precatParam } : {}),
   });
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'ok'|'err', msg }
 
   useEffect(() => { if (existing) setForm({ ...BLANK, ...existing }); }, [existing?.id]);
 
@@ -60,11 +61,28 @@ export default function AddEditMember() {
     setForm(f => ({ ...f, [k]: val }));
   };
 
-  const handleSubmit = (e) => {
+  const showToast = (type, msg) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    if (isEdit) { editMember(id, form); navigate(`/members/${id}`); }
-    else { const m = createMember(form); navigate(`/members/${m.id}`); }
+    try {
+      if (isEdit) {
+        await editMember(id, form);
+        showToast('ok', 'Changes saved successfully!');
+        setTimeout(() => navigate(`/members/${id}`), 1200);
+      } else {
+        const m = await createMember(form);
+        showToast('ok', `${form.name} added successfully!`);
+        setTimeout(() => navigate(`/members/${m.id}`), 1200);
+      }
+    } catch (err) {
+      showToast('err', err.message || 'Something went wrong. Please try again.');
+      setSaving(false);
+    }
   };
 
   const inp = "w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent";
@@ -72,6 +90,15 @@ export default function AddEditMember() {
 
   return (
     <div className="max-w-2xl space-y-4">
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-lg text-sm font-semibold transition-all
+          ${toast.type === 'ok' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+          {toast.type === 'ok' ? '✓' : '✕'} {toast.msg}
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(isEdit ? `/members/${id}` : '/members')}
           className="text-gray-500 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100">
@@ -205,12 +232,18 @@ export default function AddEditMember() {
 
         {/* Submit */}
         <div className="p-5 flex gap-3">
-          <button type="submit" disabled={saving}
+          <button type="submit" disabled={saving || toast?.type === 'ok'}
             className="flex-1 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60">
-            <Save size={16} /> {isEdit ? 'Save Changes' : 'Add Member'}
+            {saving && !toast ? (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+            ) : <Save size={16} />}
+            {saving && !toast ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Member'}
           </button>
           <button type="button" onClick={() => navigate(isEdit ? `/members/${id}` : '/members')}
-            className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+            className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-colors">
             Cancel
           </button>
         </div>

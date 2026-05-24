@@ -13,41 +13,49 @@
   from   = "/api/auth"
   to     = "/.netlify/functions/auth"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/members"
   to     = "/.netlify/functions/members"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/visits"
   to     = "/.netlify/functions/visits"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/payments"
   to     = "/.netlify/functions/payments"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/drives"
   to     = "/.netlify/functions/drives"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/workers"
   to     = "/.netlify/functions/workers"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/migrate"
   to     = "/.netlify/functions/migrate"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/users"
   to     = "/.netlify/functions/users"
   status = 200
+  force  = true
 
 # --- SPA fallback — must come LAST ---
 # Without this, refreshing any page other than "/" gives a 404.
