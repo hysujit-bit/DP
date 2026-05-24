@@ -3,48 +3,105 @@ import { useApp } from '../contexts/AppContext';
 import { RoleBadge } from '../components/Badge';
 import Modal from '../components/Modal';
 import { SUKS, MEMBER_CATEGORIES } from '../constants';
-import { UserPlus, RefreshCw, Database, Phone, Shield, Users, ChevronDown, ChevronRight } from 'lucide-react';
-import { resetData } from '../data/storage';
+import { UserPlus, Database, Phone, Shield, Users, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
-function AddWorkerModal({ open, onClose, onSave }) {
-  const [form, setForm] = useState({ name:'', email:'', contactNo:'', role:'SATSANGEE', sukIds:['bngg'], areas:'' });
+const SUK_NAME = Object.fromEntries(SUKS.map(s => [s.id, s.name]));
+
+function AddWorkerModal({ open, onClose, onSave, callerRole, callerSukId }) {
+  const blank = { name:'', email:'', contactNo:'', role:'dp_worker', sukId:'bngg', primarySukId:'bngg', tempPassword:'' };
+  const [form, setForm] = useState(blank);
+  const [showPwd, setShowPwd] = useState(false);
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  // SUK admin can only add to their own SUK
+  const availableSuks = callerRole === 'suk_admin'
+    ? SUKS.filter(s => s.id === callerSukId)
+    : SUKS;
+
   const handleSubmit = e => {
     e.preventDefault();
-    onSave({ ...form, sukIds: [form.sukIds].flat(), areas: form.areas.split(',').map(a=>a.trim()).filter(Boolean) });
+    onSave({
+      name:         form.name.trim(),
+      email:        form.email.trim(),
+      phone:        form.contactNo.trim() || null,
+      role:         form.role,
+      sukIds:       [form.sukId],
+      primarySukId: form.role === 'suk_admin' ? form.sukId : null,
+      tempPassword: form.tempPassword,
+    });
     onClose();
-    setForm({ name:'', email:'', contactNo:'', role:'SATSANGEE', sukIds:['bngg'], areas:'' });
+    setForm(blank);
+    setShowPwd(false);
   };
+
   const inp = "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400";
+
   return (
     <Modal open={open} onClose={onClose} title="Add DP Worker" size="sm">
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div><label className="label">Name</label><input value={form.name} onChange={set('name')} required className={inp} /></div>
-        <div><label className="label">Email</label><input type="email" value={form.email} onChange={set('email')} required className={inp} /></div>
-        <div><label className="label">Contact No.</label><input value={form.contactNo} onChange={set('contactNo')} className={inp} /></div>
-        <div><label className="label">Role</label>
-          <select value={form.role} onChange={set('role')} className={inp}>
-            <option value="SATSANGEE">Satsangee</option>
-            <option value="ADMIN">Admin</option>
+        <div>
+          <label className="label">Full Name</label>
+          <input value={form.name} onChange={set('name')} required className={inp} placeholder="e.g. Anjali Singh" />
+        </div>
+        <div>
+          <label className="label">Email (used to login)</label>
+          <input type="email" value={form.email} onChange={set('email')} required className={inp} placeholder="anjali@dp.app" />
+        </div>
+        <div>
+          <label className="label">Contact No.</label>
+          <input value={form.contactNo} onChange={set('contactNo')} className={inp} placeholder="9876543210" />
+        </div>
+
+        {/* Role — SUK admin can only create dp_worker */}
+        {callerRole === 'super_admin' && (
+          <div>
+            <label className="label">Role</label>
+            <select value={form.role} onChange={set('role')} className={inp}>
+              <option value="dp_worker">DP Worker</option>
+              <option value="suk_admin">SUK Admin</option>
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label className="label">{form.role === 'suk_admin' ? 'SUK (they will admin)' : 'SUK'}</label>
+          <select value={form.sukId} onChange={set('sukId')} className={inp}>
+            {availableSuks.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
-        <div><label className="label">SUK</label>
-          <select value={form.sukIds} onChange={set('sukIds')} className={inp}>
-            {SUKS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+
+        {/* Temp password */}
+        <div>
+          <label className="label">Temporary Password</label>
+          <div className="relative">
+            <input
+              type={showPwd ? 'text' : 'password'}
+              value={form.tempPassword}
+              onChange={set('tempPassword')}
+              required
+              minLength={6}
+              className={`${inp} pr-10`}
+              placeholder="At least 6 characters"
+            />
+            <button type="button" onClick={() => setShowPwd(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Worker will be prompted to change this in My Space after first login.</p>
         </div>
-        <div><label className="label">Areas (comma separated)</label><input value={form.areas} onChange={set('areas')} placeholder="Hulimavu, HSR Layout" className={inp} /></div>
-        <p className="text-xs text-sky-700 bg-sky-50 p-2 rounded-lg">💡 Default password: satsangee123</p>
-        <button type="submit" className="w-full bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2 rounded-xl">Add Worker</button>
+
+        <button type="submit" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2.5 rounded-xl transition-colors">
+          Add Worker & Create Login
+        </button>
       </form>
     </Modal>
   );
 }
 
 export default function AdminPanel() {
-  const { workers, members, createWorker, editWorker, editMember, refresh } = useApp();
+  const { workers, members, user, isSuperAdmin, isSukAdmin, createWorker, editWorker, editMember } = useApp();
   const [addWorkerOpen, setAddWorker] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
   const [assignOpen, setAssignOpen] = useState(true);
   const [assignFilter, setAssignFilter] = useState('ALL'); // ALL | UNASSIGNED | workerId
 
@@ -57,19 +114,8 @@ export default function AdminPanel() {
     return activeMembers;
   }, [activeMembers, assignFilter]);
 
-  const stats = {
-    total: members.filter(m => !m.isRemoved).length,
-    removed: members.filter(m => m.isRemoved).length,
-    bngg: members.filter(m => !m.isRemoved && m.sukId === 'bngg').length,
-    bnas: members.filter(m => !m.isRemoved && m.sukId === 'bnas').length,
-  };
-
-  const handleReset = () => {
-    resetData();
-    refresh();
-    setConfirmReset(false);
-    alert('Demo data has been reset!');
-  };
+  const activeCount = members.filter(m => !m.isRemoved).length;
+  const workerCount = workers.filter(w => w.isActive !== false).length;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -81,11 +127,15 @@ export default function AdminPanel() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Total Members',     value: stats.total,   color: 'text-blue-600',   bg: 'bg-blue-50'  },
-          { label: 'Bannerghatta',      value: stats.bngg,    color: 'text-sky-700', bg: 'bg-sky-50'},
-          { label: 'Banashankari',      value: stats.bnas,    color: 'text-purple-600', bg: 'bg-purple-50'},
-          { label: 'DP Workers',        value: workers.filter(w=>w.isActive!==false).length, color: 'text-green-600', bg: 'bg-green-50'},
-        ].map(s => (
+          { label: 'Total Members', value: activeCount, color: 'text-blue-600', bg: 'bg-blue-50' },
+          ...SUKS.map((s, i) => ({
+            label: s.name,
+            value: members.filter(m => !m.isRemoved && m.sukId === s.id).length,
+            color: ['text-sky-700','text-purple-600','text-teal-600','text-orange-600'][i],
+            bg:    ['bg-sky-50','bg-purple-50','bg-teal-50','bg-orange-50'][i],
+          })),
+          { label: 'DP Workers', value: workerCount, color: 'text-green-600', bg: 'bg-green-50' },
+        ].slice(0, 4).map(s => (
           <div key={s.label} className={`${s.bg} rounded-xl p-4 border border-white`}>
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
             <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
@@ -107,35 +157,38 @@ export default function AdminPanel() {
         </div>
         <div className="divide-y divide-gray-50">
           {workers.map(w => (
-            <div key={w.id} className={`flex items-center gap-3 px-5 py-3 ${w.isActive === false ? 'opacity-50' : ''}`}>
+            <div key={w.id} className={`flex items-center gap-3 px-5 py-3 ${w.isActive === false ? 'opacity-40' : ''}`}>
               <div className="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-bold text-sm">
                 {w.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-gray-900">{w.name}</span>
                   <RoleBadge role={w.role} />
+                  {w.isActive === false && <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-1.5 py-0.5 rounded-full">Inactive</span>}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5 flex-wrap">
                   <span>{w.email}</span>
-                  {w.contactNo && <span className="flex items-center gap-1"><Phone size={10}/>{w.contactNo}</span>}
-                  <span>{w.sukIds?.map(s => s === 'bngg' ? 'Bannerghatta' : 'Banashankari').join(', ')}</span>
+                  {w.phone && <span className="flex items-center gap-1"><Phone size={10}/>{w.phone}</span>}
+                  <span>{w.sukIds?.map(id => SUK_NAME[id] || id).join(', ')}</span>
                 </div>
               </div>
-              {w.isActive !== false && (
+              {w.isActive !== false ? (
                 <button onClick={() => editWorker(w.id, { isActive: false })}
-                  className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors">
+                  className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
                   Deactivate
                 </button>
-              )}
-              {w.isActive === false && (
+              ) : (
                 <button onClick={() => editWorker(w.id, { isActive: true })}
-                  className="text-xs text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-50">
+                  className="text-xs text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-50 whitespace-nowrap">
                   Activate
                 </button>
               )}
             </div>
           ))}
+          {workers.length === 0 && (
+            <div className="text-center py-6 text-sm text-gray-400">No workers in this SUK yet</div>
+          )}
         </div>
       </div>
 
@@ -209,32 +262,14 @@ export default function AdminPanel() {
         )}
       </div>
 
-      {/* Danger zone */}
-      <div className="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-red-50">
-          <Database size={16} className="text-red-500" />
-          <h2 className="font-semibold text-red-700">Data Management</h2>
-        </div>
-        <div className="p-5 space-y-3">
-          <p className="text-sm text-gray-600">Reset all data back to the original demo dataset. Use this if you want to start fresh with demo data.</p>
-          {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)}
-              className="flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 text-sm px-4 py-2 rounded-xl transition-colors">
-              <RefreshCw size={14} /> Reset to Demo Data
-            </button>
-          ) : (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
-              <p className="text-sm text-red-700 font-medium">Are you sure? This will erase all changes.</p>
-              <div className="flex gap-2">
-                <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg">Yes, Reset</button>
-                <button onClick={() => setConfirmReset(false)} className="border border-gray-200 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50">Cancel</button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <AddWorkerModal open={addWorkerOpen} onClose={() => setAddWorker(false)} onSave={createWorker} />
+      {/* Add Worker Modal */}
+      <AddWorkerModal
+        open={addWorkerOpen}
+        onClose={() => setAddWorker(false)}
+        onSave={createWorker}
+        callerRole={user?.role}
+        callerSukId={user?.sukId}
+      />
     </div>
   );
 }

@@ -58,7 +58,8 @@ const ISH_STATUS = {
 // ── Entry point ───────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user } = useApp();
-  return user?.role === 'ADMIN' ? <AdminDashboard /> : <WorkerDashboard />;
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'suk_admin';
+  return isAdmin ? <AdminDashboard /> : <WorkerDashboard />;
 }
 
 
@@ -685,17 +686,8 @@ function WorkerDashboard() {
                   <span className="text-xs text-gray-400 flex-shrink-0">{fmtShort(v.visitDate)}</span>
                 </button>
               );
-            })}
+                       })}
           </div>
-        </div>
-      )}
-
-      {/* ── Empty state ──────────────────────────────────────────────────── */}
-      {myMembers.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-10 shadow-sm text-center">
-          <UserCheck size={32} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-500">No members assigned to you yet</p>
-          <p className="text-xs text-gray-400 mt-1">Ask your admin to assign members from the Admin Panel</p>
         </div>
       )}
     </div>

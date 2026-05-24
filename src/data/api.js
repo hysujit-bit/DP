@@ -50,6 +50,14 @@ export function logout() {
   clearToken();
 }
 
+// ─── Users ────────────────────────────────────────────────────────────────────
+export async function changePassword(currentPassword, newPassword) {
+  return request('/users', {
+    method: 'PATCH',
+    body: { currentPassword, newPassword },
+  });
+}
+
 // ─── Workers ──────────────────────────────────────────────────────────────────
 export async function getWorkers() {
   return request('/workers');

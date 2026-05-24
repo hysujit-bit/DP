@@ -248,7 +248,7 @@ export default function MemberProfile() {
                 className="flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm px-3 py-2 rounded-lg">
                 <Edit size={14} /> Edit
               </button>
-              {user?.role === 'ADMIN' && (
+              {user?.role === 'super_admin' || user?.role === 'suk_admin' && (
                 <button onClick={() => setRm(true)}
                   className="flex items-center gap-1.5 border border-red-200 hover:bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg">
                   <Trash2 size={14} /> Remove
@@ -256,7 +256,7 @@ export default function MemberProfile() {
               )}
             </>
           )}
-          {member.isRemoved && user?.role === 'ADMIN' && (
+          {member.isRemoved && user?.role === 'super_admin' || user?.role === 'suk_admin' && (
             <button onClick={() => bringBack(id)}
               className="flex items-center gap-1.5 border border-green-200 hover:bg-green-50 text-green-700 text-sm px-3 py-1.5 rounded-lg">
               <RotateCcw size={14} /> Restore
@@ -613,21 +613,7 @@ export default function MemberProfile() {
       {/* Modals */}
       <LogVisitModal          open={visitModal} onClose={() => setVis(false)} member={member} workerId={user?.id} onSave={handleLogVisit} />
       <RecordIshtabhritiModal open={ishModal}   onClose={() => setIsh(false)} member={member} workerId={user?.id} onSave={recordPayment} />
-      <RemoveModal      open={rmModal}    onClose={() => setRm(false)}  member={member} onRemove={(r) => { deleteMember(id, r); navigate('/members'); }} />
-      <CategoryPickerModal
-        open={catModal}
-        onClose={() => setCat(false)}
-        title={`Move ${member.name} to…`}
-        current={member.memberCategory}
-        onSelect={(key) => { editMember(id, { memberCategory: key }); }}
-      />
-      <CategoryChangePromptModal
-        open={!!catPromptTrigger}
-        onClose={() => setCatPromptTrigger(null)}
-        member={member}
-        triggerKey={catPromptTrigger}
-        onSelect={(key) => { editMember(id, { memberCategory: key }); }}
-      />
-    </div>
+      <RemoveModal      open={rmModal}    onClose={() => setRm(false)}  member={member} onConfirm={handleRemove} />
+    </>
   );
 }

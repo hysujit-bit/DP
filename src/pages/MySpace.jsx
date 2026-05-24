@@ -6,7 +6,7 @@ import IshtabhritiTimeline from '../components/IshtabhritiTimeline';
 import {
   Bell, BellOff, CheckCircle2, Clock, AlertTriangle, XCircle,
   Phone, ChevronRight, ChevronDown, Users, IndianRupee,
-  Activity, Calendar, UserCheck,
+  Activity, Calendar, UserCheck, KeyRound, Eye, EyeOff,
 } from 'lucide-react';
 
 // ── Date helpers (same as IshtabhritiTracker) ─────────────────────────────────
@@ -56,7 +56,7 @@ const NOTIF_STYLE = {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MySpace() {
-  const { members, workers, visits, payments, recordPayment, user, currentSukId } = useApp();
+  const { members, workers, visits, payments, recordPayment, user, currentSukId, changePassword } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const section  = searchParams.get('section'); // 'notifications' | 'members' | 'ishtabhrity' | null (all)
@@ -69,8 +69,29 @@ export default function MySpace() {
   const [justNotSent,  setJustNotSent]  = useState(new Set());
   const [ishExpanded,  setIshExpanded]  = useState(null);
 
+  // Change password state
+  const [pwdOpen,      setPwdOpen]      = useState(false);
+  const [pwdForm,      setPwdForm]      = useState({ current: '', next: '', confirm: '' });
+  const [pwdShow,      setPwdShow]      = useState({ current: false, next: false });
+  const [pwdStatus,    setPwdStatus]    = useState(null); // null | 'saving' | 'ok' | string(error)
+  const setPwd = k => e => setPwdForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (pwdForm.next !== pwdForm.confirm) { setPwdStatus('New passwords do not match'); return; }
+    if (pwdForm.next.length < 6) { setPwdStatus('New password must be at least 6 characters'); return; }
+    setPwdStatus('saving');
+    const result = await changePassword(pwdForm.current, pwdForm.next);
+    if (result.ok) {
+      setPwdStatus('ok');
+      setPwdForm({ current: '', next: '', confirm: '' });
+      setTimeout(() => { setPwdOpen(false); setPwdStatus(null); }, 2000);
+    } else {
+      setPwdStatus(result.error || 'Failed to change password');
+    }
+  };
+
   const currentSuk = SUKS.find(s => s.id === currentSukId)?.name || '';
-  const isAdmin    = user?.role === 'ADMIN';
 
   // My assigned members (all categories)
   const myMembers = useMemo(() =>
@@ -313,6 +334,73 @@ export default function MySpace() {
         )}
       </div>}
 
+      {/* ── CHANGE PASSWORD ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <button
+          onClick={() => setPwdOpen(v => !v)}
+          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <KeyRound size={16} className="text-gray-400" />
+            <span className="font-semibold text-gray-900 text-sm">Change Password</span>
+          </div>
+          {pwdOpen ? <ChevronDown size={15} className="text-gray-400" /> : <ChevronRight size={15} className="text-gray-400" />}
+        </button>
+
+        {pwdOpen && (
+          <form onSubmit={handleChangePassword} className="border-t border-gray-50 px-5 py-4 space-y-3">
+            {/* Current password */}
+            <div>
+              <label className="label text-xs text-gray-600">Current Password</label>
+              <div className="relative">
+                <input type={pwdShow.current ? 'text' : 'password'} value={pwdForm.current} onChange={setPwd('current')} required
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 pr-10"
+                  placeholder="Your current password" />
+                <button type="button" onClick={() => setPwdShow(s => ({ ...s, current: !s.current }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {pwdShow.current ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            {/* New password */}
+            <div>
+              <label className="label text-xs text-gray-600">New Password</label>
+              <div className="relative">
+                <input type={pwdShow.next ? 'text' : 'password'} value={pwdForm.next} onChange={setPwd('next')} required minLength={6}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 pr-10"
+                  placeholder="At least 6 characters" />
+                <button type="button" onClick={() => setPwdShow(s => ({ ...s, next: !s.next }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {pwdShow.next ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            {/* Confirm */}
+            <div>
+              <label className="label text-xs text-gray-600">Confirm New Password</label>
+              <input type="password" value={pwdForm.confirm} onChange={setPwd('confirm')} required
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                placeholder="Re-enter new password" />
+            </div>
+
+            {/* Status messages */}
+            {pwdStatus && pwdStatus !== 'saving' && pwdStatus !== 'ok' && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{pwdStatus}</p>
+            )}
+            {pwdStatus === 'ok' && (
+              <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                <CheckCircle2 size={13} /> Password changed successfully!
+              </p>
+            )}
+
+            <button type="submit" disabled={pwdStatus === 'saving'}
+              className="w-full bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-semibold py-2 rounded-xl text-sm transition-colors">
+              {pwdStatus === 'saving' ? 'Saving…' : 'Update Password'}
+            </button>
+          </form>
+        )}
+      </div>
+
       {/* ── ISHTABHRITY TRACKER ───────────────────────────────────────────── */}
       {(!section || section === 'ishtabhrity') && <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-gray-50 flex items-center gap-2">
@@ -465,18 +553,19 @@ function IshMemberRow({ m, showMark, onMark, onMarkNotSent, navigate, confirmed,
         {showMark && !confirmed && (
           <div className="flex flex-col gap-1">
             <button onClick={() => onMark(m)}
-              className="bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-green-200 flex items-center gap-1 whitespace-nowrap">
-              <CheckCircle2 size={11} /> Sent ✓
-            </button>
-            <button onClick={() => onMarkNotSent(m)}
-              className="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-200 flex items-center gap-1 whitespace-nowrap">
-              <XCircle size={11} /> Not Sent
-            </button>
-          </div>
-        )}
+              className="bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-green-200 flex items-center gap-1 whitespace-nowrap">✓ Sent
+              </button>
+              <button onClick={() => onMarkNotSent(m)}
+                className="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-200 flex items-center gap-1 whitespace-nowrap">
+                ✕ Not Sent
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  return noWrapper ? inner : inner;
+  if (noWrapper) return inner;
+  return inner;
 }

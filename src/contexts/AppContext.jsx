@@ -78,14 +78,26 @@ export function AppProvider({ children }) {
     try {
       setLoading(true);
       const userData = await api.login(email, password);
-      const session  = { id: userData.id, email: userData.email, role: userData.role, name: userData.name };
+      const session  = {
+        id:       userData.id,
+        email:    userData.email,
+        role:     userData.role,
+        name:     userData.name,
+        workerId: userData.workerId,
+        sukId:    userData.sukId,    // primary SUK for suk_admin; null for others
+      };
       localStorage.setItem('dp_session', JSON.stringify(session));
       setUser(session);
 
-      // Non-admin: lock to their first SUK
-      if (userData.role !== 'ADMIN') {
-        const workers = await api.getWorkers();
-        const me = workers.find(w => w.id === userData.workerId);
+      // Super admin keeps free SUK switching.
+      // SUK admin is locked to their primary sukId.
+      // DP worker is locked to their first assigned SUK.
+      if (userData.role === 'suk_admin' && userData.sukId) {
+        localStorage.setItem('dp_current_suk', userData.sukId);
+        setCurrentSukId(userData.sukId);
+      } else if (userData.role === 'dp_worker') {
+        const allWorkers = await api.getWorkers();
+        const me = allWorkers.find(w => w.id === userData.workerId);
         const defaultSuk = me?.sukIds?.[0] || 'bngg';
         localStorage.setItem('dp_current_suk', defaultSuk);
         setCurrentSukId(defaultSuk);
@@ -144,6 +156,16 @@ export function AppProvider({ children }) {
     api.updateWorker(id, data).then(refresh).catch(e => setError(e.message));
   };
 
+  // ── Password change ────────────────────────────────────────────────────────
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await api.changePassword(currentPassword, newPassword);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  };
+
   // ── Drives ─────────────────────────────────────────────────────────────────
   const createDrive = (data) => {
     api.addDrive({ sukId: currentSukId, ...data }).then(refresh).catch(e => setError(e.message));
@@ -155,16 +177,22 @@ export function AppProvider({ children }) {
     api.deleteDrive(id).then(refresh).catch(e => setError(e.message));
   };
 
+  // ── Role helpers ───────────────────────────────────────────────────────────
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isSukAdmin   = user?.role === 'suk_admin';
+  const isAnyAdmin   = isSuperAdmin || isSukAdmin;  // has Admin Panel access
+
   return (
     <AppContext.Provider value={{
       user, login, logout,
+      isSuperAdmin, isSukAdmin, isAnyAdmin,
       currentSukId, switchSuk,
       members, workers, visits, payments, drives,
       loading, error,
       createMember, editMember, deleteMember, bringBack,
       logVisit, editVisit, recordPayment,
-      createWorker, editWorker,
-      createDrive, editDrive, removeDrive,
+      createWorker, editWorker, changePassword,
+          createDrive, editDrive, removeDrive,
       refresh,
     }}>
       {children}
@@ -172,4 +200,8 @@ export function AppProvider({ children }) {
   );
 }
 
-export const useApp = () => useContext(AppContext);
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}

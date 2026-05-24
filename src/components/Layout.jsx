@@ -28,7 +28,7 @@ const MY_SPACE_SECTIONS = [
 ];
 
 export default function Layout() {
-  const { user, logout, currentSukId, switchSuk } = useApp();
+  const { user, logout, currentSukId, switchSuk, isSuperAdmin, isAnyAdmin } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -56,8 +56,8 @@ export default function Layout() {
           <div className="flex-1 min-w-0">
             <div className="font-bold text-gray-900 text-sm leading-tight">DP Work App</div>
 
-            {/* SUK selector — dropdown for ADMIN, static label for others */}
-            {user?.role === 'ADMIN' ? (
+            {/* SUK selector — dropdown for Super Admin only, static label for others */}
+            {isSuperAdmin ? (
               <div className="relative">
                 <button
                   onClick={() => setSukOpen(v => !v)}
@@ -277,7 +277,7 @@ export default function Layout() {
           </div>
 
           {/* Admin-only: Full Ishtabhrity Tracker (all SUK members) */}
-          {user?.role === 'ADMIN' && (
+          {isAnyAdmin && (
             <NavLink to="/ishtabhrity"
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -310,7 +310,7 @@ export default function Layout() {
             </NavLink>
           ))}
 
-          {user?.role === 'ADMIN' && (
+          {isAnyAdmin && (
             <NavLink to="/admin"
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -335,7 +335,9 @@ export default function Layout() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-gray-900 truncate">{user?.name}</div>
-              <div className="text-xs text-gray-500">{user?.role}</div>
+              <div className="text-xs text-gray-500">
+                {{ super_admin: 'Super Admin', suk_admin: 'SUK Admin', dp_worker: 'DP Worker' }[user?.role] || user?.role}
+              </div>
             </div>
             <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Logout">
               <LogOut size={16} />
@@ -379,16 +381,14 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Add Member — category picker modal */}
-      <CategoryPickerModal
-        open={addModal}
-        onClose={() => setAddModal(false)}
-        title="What category is this member?"
-        onSelect={(key) => {
-          setAddModal(false);
-          navigate(`/members/new?precat=${key}`);
-        }}
-      />
+      {/* Add Member modal */}
+      {addModal && (
+        <CategoryPickerModal
+          open={addModal}
+          onClose={() => setAddModal(false)}
+          onSelect={(cat) => { navigate(`/members/new?precat=${cat}`); setAddModal(false); }}
+        />
+      )}
     </div>
   );
 }

@@ -43,6 +43,11 @@
   to    = "/.netlify/functions/migrate"
   status = 200
 
+[[redirects]]
+  from  = "/api/users"
+  to    = "/.netlify/functions/users"
+  status = 200
+
 # ─── SPA fallback — must come LAST ───────────────────────────────────────────
 # Without this, refreshing any page other than "/" gives a 404.
 [[redirects]]
@@ -65,7 +70,6 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 # Service worker — never cache
-[[headers]]
-  for = "/sw.js"
+[[headers]]  for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"

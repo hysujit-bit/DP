@@ -15,7 +15,7 @@ exports.handler = async (event) => {
 
   try {
     const [user] = await sql`
-      SELECT id, email, name, role, password_hash, worker_id
+      SELECT id, email, name, role, password_hash, worker_id, suk_id, is_active
       FROM users
       WHERE email = ${email.toLowerCase().trim()}
     `;
@@ -25,12 +25,15 @@ exports.handler = async (event) => {
     const valid = verifyPassword(password, user.password_hash);
     if (!valid) return err('Invalid email or password', 401);
 
+    if (user.is_active === false) return err('Your account has been deactivated. Please contact your admin.', 403);
+
     const token = createToken({
       userId:   user.id,
       email:    user.email,
       name:     user.name,
       role:     user.role,
       workerId: user.worker_id,
+      sukId:    user.suk_id,
     });
 
     return ok({
@@ -41,10 +44,11 @@ exports.handler = async (event) => {
         name:     user.name,
         role:     user.role,
         workerId: user.worker_id,
+        sukId:    user.suk_id,
       },
     });
   } catch (e) {
-    console.error('auth error', e);
+    console.error('auth error', e)
     return err('Server error', 500);
   }
 };

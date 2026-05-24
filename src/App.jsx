@@ -19,7 +19,10 @@ import MySpace from './pages/MySpace';
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user } = useApp();
   if (!user) return <Navigate to="/login" replace />;
-  if (adminOnly && user.role !== 'ADMIN') return <Navigate to="/" replace />;
+  if (adminOnly) {
+    const isAdmin = user.role === 'super_admin' || user.role === 'suk_admin';
+    if (!isAdmin) return <Navigate to="/" replace />;
+  }
   return children;
 }
 

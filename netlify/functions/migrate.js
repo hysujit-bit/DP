@@ -67,41 +67,58 @@ exports.handler = async (event) => {
 
     await sql`CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'SATSANGEE', password_hash TEXT NOT NULL,
-      worker_id TEXT REFERENCES workers(id), created_at TIMESTAMPTZ DEFAULT NOW()
+      role TEXT NOT NULL DEFAULT 'dp_worker', password_hash TEXT NOT NULL,
+      worker_id TEXT REFERENCES workers(id),
+      suk_id TEXT,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
+
+    // ── Add new columns to existing tables (idempotent for re-runs) ───────────
+    await sql`ALTER TABLE workers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+    await sql`ALTER TABLE workers ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'dp_worker'`;
+    await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS suk_id TEXT`;
+    await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
 
     // ── 2. Upsert workers (fixes suk_ids on re-run) ───────────────────────────
     const workers = [
-      { id: 'w1', name: 'Sujit Kumar',       email: 'admin@dp.app',     sukIds: ['bngg','bnas','ejip','garb'] },
-      { id: 'w2', name: 'Pritosh Pattanaik', email: 'pritosh@dp.app',   sukIds: ['bngg'] },
-      { id: 'w3', name: 'Debajyoti Sahoo',   email: 'debajyoti@dp.app', sukIds: ['bngg'] },
-      { id: 'w4', name: 'Ashok Das',         email: 'ashok@dp.app',     sukIds: ['bngg'] },
-      { id: 'w5', name: 'Ramesh Nayak',      email: 'ramesh@dp.app',    sukIds: ['bnas'] },
-      { id: 'w6', name: 'Priya Sharma',      email: 'priya@dp.app',     sukIds: ['bnas'] },
+      { id: 'w1', name: 'Sujit Kumar',       email: 'admin@dp.app',     sukIds: ['bngg','bnas','ejip','garb'], role: 'super_admin' },
+      { id: 'w2', name: 'Pritosh Pattanaik', email: 'pritosh@dp.app',   sukIds: ['bngg'],                     role: 'dp_worker'   },
+      { id: 'w3', name: 'Debajyoti Sahoo',   email: 'debajyoti@dp.app', sukIds: ['bngg'],                     role: 'dp_worker'   },
+      { id: 'w4', name: 'Ashok Das',         email: 'ashok@dp.app',     sukIds: ['bngg'],                     role: 'dp_worker'   },
+      { id: 'w5', name: 'Ramesh Nayak',      email: 'ramesh@dp.app',    sukIds: ['bnas'],                     role: 'dp_worker'   },
+      { id: 'w6', name: 'Priya Sharma',      email: 'priya@dp.app',     sukIds: ['bnas'],                     role: 'dp_worker'   },
     ];
     for (const w of workers) {
       await sql`
-        INSERT INTO workers (id, name, email, suk_ids) VALUES (${w.id}, ${w.name}, ${w.email}, ${w.sukIds})
-        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, suk_ids = EXCLUDED.suk_ids
+        INSERT INTO workers (id, name, email, suk_ids, role, is_active)
+        VALUES (${w.id}, ${w.name}, ${w.email}, ${w.sukIds}, ${w.role}, true)
+        ON CONFLICT (id) DO UPDATE SET
+          name      = EXCLUDED.name,
+          suk_ids   = EXCLUDED.suk_ids,
+          role      = EXCLUDED.role,
+          is_active = COALESCE(workers.is_active, true)
       `;
     }
 
     // ── 3. Upsert users ───────────────────────────────────────────────────────
     const users = [
-      { id: 'u1', email: 'admin@dp.app',     name: 'Sujit Kumar',       role: 'ADMIN',     password: 'admin123',     workerId: 'w1' },
-      { id: 'u2', email: 'pritosh@dp.app',   name: 'Pritosh Pattanaik', role: 'SATSANGEE', password: 'satsangee123', workerId: 'w2' },
-      { id: 'u3', email: 'debajyoti@dp.app', name: 'Debajyoti Sahoo',   role: 'SATSANGEE', password: 'satsangee123', workerId: 'w3' },
-      { id: 'u4', email: 'ashok@dp.app',     name: 'Ashok Das',         role: 'SATSANGEE', password: 'satsangee123', workerId: 'w4' },
-      { id: 'u5', email: 'ramesh@dp.app',    name: 'Ramesh Nayak',      role: 'SATSANGEE', password: 'satsangee123', workerId: 'w5' },
-      { id: 'u6', email: 'priya@dp.app',     name: 'Priya Sharma',      role: 'SATSANGEE', password: 'satsangee123', workerId: 'w6' },
+      { id: 'u1', email: 'admin@dp.app',     name: 'Sujit Kumar',       role: 'super_admin', password: 'admin123',     workerId: 'w1', sukId: null },
+      { id: 'u2', email: 'pritosh@dp.app',   name: 'Pritosh Pattanaik', role: 'dp_worker',   password: 'satsangee123', workerId: 'w2', sukId: null },
+      { id: 'u3', email: 'debajyoti@dp.app', name: 'Debajyoti Sahoo',   role: 'dp_worker',   password: 'satsangee123', workerId: 'w3', sukId: null },
+      { id: 'u4', email: 'ashok@dp.app',     name: 'Ashok Das',         role: 'dp_worker',   password: 'satsangee123', workerId: 'w4', sukId: null },
+      { id: 'u5', email: 'ramesh@dp.app',    name: 'Ramesh Nayak',      role: 'dp_worker',   password: 'satsangee123', workerId: 'w5', sukId: null },
+      { id: 'u6', email: 'priya@dp.app',     name: 'Priya Sharma',      role: 'dp_worker',   password: 'satsangee123', workerId: 'w6', sukId: null },
     ];
     for (const u of users) {
       const hash = hashPassword(u.password);
       await sql`
-        INSERT INTO users (id, email, name, role, password_hash, worker_id)
-        VALUES (${u.id}, ${u.email}, ${u.name}, ${u.role}, ${hash}, ${u.workerId})
-        ON CONFLICT (email) DO NOTHING
+        INSERT INTO users (id, email, name, role, password_hash, worker_id, suk_id, is_active)
+        VALUES (${u.id}, ${u.email}, ${u.name}, ${u.role}, ${hash}, ${u.workerId}, ${u.sukId}, true)
+        ON CONFLICT (email) DO UPDATE SET
+          role      = EXCLUDED.role,
+          suk_id    = EXCLUDED.suk_id,
+          is_active = COALESCE(users.is_active, true)
       `;
     }
 
@@ -218,14 +235,13 @@ exports.handler = async (event) => {
       seeded:  {
         workers:  workers.length,
         users:    users.length,
-        members:  members.length,
+        members: members.length,
         visits:   visits.length,
         payments: payments.length,
       },
     });
-
   } catch (e) {
     console.error('migrate error', e);
-    return err(`Migration failed: ${e.message}`, 500);
+    return err(e.message || 'Migration failed', 500);
   }
 };
