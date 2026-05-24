@@ -71,6 +71,10 @@ export async function updateWorker(id, data) {
   return request(`/workers?id=${id}`, { method: 'PATCH', body: data });
 }
 
+export async function deleteWorker(id) {
+  return request(`/workers?id=${id}`, { method: 'DELETE' });
+}
+
 // ─── Members ──────────────────────────────────────────────────────────────────
 export async function getMembers(sukId, includeRemoved = false) {
   const q = includeRemoved ? `sukId=${sukId}&all=1` : `sukId=${sukId}`;

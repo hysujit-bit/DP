@@ -160,6 +160,10 @@ export function AppProvider({ children }) {
   const editWorker = (id, data) => {
     api.updateWorker(id, data).then(refresh).catch(e => setError(e.message));
   };
+  const deleteWorker = async (id) => {
+    await api.deleteWorker(id);
+    await refresh();
+  };
 
   // ── Password change ────────────────────────────────────────────────────────
   const changePassword = async (currentPassword, newPassword) => {
@@ -198,7 +202,7 @@ export function AppProvider({ children }) {
       loading, error,
       createMember, editMember, deleteMember, bringBack,
       logVisit, editVisit, recordPayment,
-      createWorker, editWorker, changePassword,
+      createWorker, editWorker, deleteWorker, changePassword,
           createDrive, editDrive, removeDrive,
       refresh,
     }}>

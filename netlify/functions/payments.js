@@ -6,13 +6,19 @@ const { sql }                        = require('./_db');
 const { requireAuth }                = require('./_auth');
 const { ok, err, preflight, body }   = require('./_response');
 
+// Neon HTTP driver returns DATE columns as JS Date objects; normalise to YYYY-MM-DD strings
+function fmtDate(d) {
+  if (!d) return null;
+  return (d instanceof Date ? d.toISOString() : String(d)).slice(0, 10);
+}
+
 function toApp(row) {
   return {
     id:            row.id,
     personId:      row.person_id,
     familyCode:    row.family_code,
     recordedBy:    row.recorded_by,
-    paymentDate:   row.payment_date,
+    paymentDate:   fmtDate(row.payment_date),
     monthCovered:  row.month_covered,
     status:        row.status,
     createdAt:     row.created_at,

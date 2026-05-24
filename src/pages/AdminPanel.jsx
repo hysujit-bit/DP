@@ -3,7 +3,7 @@ import { useApp } from '../contexts/AppContext';
 import { RoleBadge } from '../components/Badge';
 import Modal from '../components/Modal';
 import { SUKS, MEMBER_CATEGORIES } from '../constants';
-import { UserPlus, Database, Phone, Shield, Users, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Phone, Shield, Users, ChevronDown, ChevronRight, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react';
 
 const SUK_NAME = Object.fromEntries(SUKS.map(s => [s.id, s.name]));
 
@@ -99,9 +99,133 @@ function AddWorkerModal({ open, onClose, onSave, callerRole, callerSukId }) {
   );
 }
 
+function EditWorkerModal({ open, onClose, worker, onSave, callerRole }) {
+  const [form, setForm] = useState({});
+  const [showPwd, setShowPwd] = useState(false);
+
+  // Reset form whenever the modal opens with a new worker
+  useState(() => { if (worker) setForm({ name: worker.name, phone: worker.phone || '', role: worker.role, sukId: worker.sukIds?.[0] || 'bngg', newPassword: '' }); }, [worker]);
+
+  // Keep form in sync when worker prop changes
+  if (open && worker && form.name !== undefined && form._id !== worker.id) {
+    setForm({ _id: worker.id, name: worker.name, phone: worker.phone || '', role: worker.role, sukId: worker.sukIds?.[0] || 'bngg', newPassword: '' });
+  }
+
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+  const inp = "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400";
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    const patch = {
+      name:     form.name.trim(),
+      phone:    form.phone.trim() || null,
+      role:     form.role,
+      sukIds:   [form.sukId],
+    };
+    if (form.newPassword && form.newPassword.length >= 6) patch.newPassword = form.newPassword;
+    onSave(worker.id, patch);
+    onClose();
+  };
+
+  if (!worker) return null;
+  return (
+    <Modal open={open} onClose={onClose} title={`Edit — ${worker.name}`} size="sm">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label className="label">Full Name</label>
+          <input value={form.name || ''} onChange={set('name')} required className={inp} />
+        </div>
+        <div>
+          <label className="label">Contact No.</label>
+          <input value={form.phone || ''} onChange={set('phone')} className={inp} placeholder="9876543210" />
+        </div>
+        {callerRole === 'super_admin' && (
+          <div>
+            <label className="label">Role</label>
+            <select value={form.role || 'dp_worker'} onChange={set('role')} className={inp}>
+              <option value="dp_worker">DP Worker</option>
+              <option value="suk_admin">SUK Admin</option>
+            </select>
+          </div>
+        )}
+        <div>
+          <label className="label">Primary SUK</label>
+          <select value={form.sukId || 'bngg'} onChange={set('sukId')} className={inp}>
+            {SUKS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">New Password <span className="text-gray-400 font-normal">(leave blank to keep current)</span></label>
+          <div className="relative">
+            <input
+              type={showPwd ? 'text' : 'password'}
+              value={form.newPassword || ''}
+              onChange={set('newPassword')}
+              minLength={6}
+              className={`${inp} pr-10`}
+              placeholder="At least 6 characters"
+            />
+            <button type="button" onClick={() => setShowPwd(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </div>
+        <button type="submit" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2.5 rounded-xl transition-colors">
+          Save Changes
+        </button>
+      </form>
+    </Modal>
+  );
+}
+
+function DeleteConfirmModal({ open, onClose, worker, onConfirm }) {
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState('');
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteErr('');
+    try {
+      await onConfirm(worker.id);
+      onClose();
+    } catch (e) {
+      setDeleteErr(e.message || 'Delete failed. Please try again.');
+      setDeleting(false);
+    }
+  };
+
+  if (!worker) return null;
+  return (
+    <Modal open={open} onClose={() => { setDeleteErr(''); onClose(); }} title="Delete Worker" size="sm">
+      <div className="space-y-4">
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-700">
+          <p className="font-semibold mb-1">⚠️ This action cannot be undone.</p>
+          <p>Deleting <strong>{worker.name}</strong> will permanently remove their account and unassign all their members. Their visit history will be preserved.</p>
+        </div>
+        {deleteErr && (
+          <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-100">{deleteErr}</p>
+        )}
+        <div className="flex gap-3">
+          <button onClick={() => { setDeleteErr(''); onClose(); }} disabled={deleting}
+            className="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={handleDelete} disabled={deleting}
+            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl transition-colors">
+            {deleting ? 'Deleting…' : 'Delete Worker'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export default function AdminPanel() {
-  const { workers, members, user, isSuperAdmin, isSukAdmin, createWorker, editWorker, editMember } = useApp();
+  const { workers, members, user, isSuperAdmin, isSukAdmin, createWorker, editWorker, deleteWorker, editMember } = useApp();
   const [addWorkerOpen, setAddWorker] = useState(false);
+  const [editingWorker, setEditingWorker] = useState(null);
+  const [deletingWorker, setDeletingWorker] = useState(null);
   const [assignOpen, setAssignOpen] = useState(true);
   const [assignFilter, setAssignFilter] = useState('ALL'); // ALL | UNASSIGNED | workerId
 
@@ -157,8 +281,8 @@ export default function AdminPanel() {
         </div>
         <div className="divide-y divide-gray-50">
           {workers.map(w => (
-            <div key={w.id} className={`flex items-center gap-3 px-5 py-3 ${w.isActive === false ? 'opacity-40' : ''}`}>
-              <div className="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-bold text-sm">
+            <div key={w.id} className={`flex items-center gap-3 px-5 py-3 ${w.isActive === false ? 'opacity-50' : ''}`}>
+              <div className="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-bold text-sm flex-shrink-0">
                 {w.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
@@ -173,17 +297,38 @@ export default function AdminPanel() {
                   <span>{w.sukIds?.map(id => SUK_NAME[id] || id).join(', ')}</span>
                 </div>
               </div>
-              {w.isActive !== false ? (
-                <button onClick={() => editWorker(w.id, { isActive: false })}
-                  className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
-                  Deactivate
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Activate / Deactivate */}
+                {w.isActive !== false ? (
+                  <button onClick={() => editWorker(w.id, { isActive: false })}
+                    title="Deactivate"
+                    className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
+                    Deactivate
+                  </button>
+                ) : (
+                  <button onClick={() => editWorker(w.id, { isActive: true })}
+                    title="Activate"
+                    className="text-xs text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-50 whitespace-nowrap">
+                    Activate
+                  </button>
+                )}
+                {/* Edit */}
+                <button onClick={() => setEditingWorker(w)}
+                  title="Edit"
+                  className="p-1.5 text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors">
+                  <Pencil size={14} />
                 </button>
-              ) : (
-                <button onClick={() => editWorker(w.id, { isActive: true })}
-                  className="text-xs text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-50 whitespace-nowrap">
-                  Activate
-                </button>
-              )}
+                {/* Delete — super admin only, can't delete yourself */}
+                {isSuperAdmin && w.id !== user?.workerId && (
+                  <button onClick={() => setDeletingWorker(w)}
+                    title="Delete"
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {workers.length === 0 && (
@@ -269,6 +414,23 @@ export default function AdminPanel() {
         onSave={createWorker}
         callerRole={user?.role}
         callerSukId={user?.sukId}
+      />
+
+      {/* Edit Worker Modal */}
+      <EditWorkerModal
+        open={!!editingWorker}
+        onClose={() => setEditingWorker(null)}
+        worker={editingWorker}
+        onSave={editWorker}
+        callerRole={user?.role}
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        open={!!deletingWorker}
+        onClose={() => setDeletingWorker(null)}
+        worker={deletingWorker}
+        onConfirm={deleteWorker}
       />
     </div>
   );

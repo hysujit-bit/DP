@@ -131,6 +131,28 @@ exports.handler = async (event) => {
       return ok(toApp(row));
     }
 
+    // ── DELETE — remove worker + login account (super_admin only) ────────────
+    if (event.httpMethod === 'DELETE') {
+      if (!isSuperAdmin) return err('Forbidden — super admin only', 403);
+      if (!id) return err('id is required');
+
+      // Safety: prevent self-deletion
+      if (id === caller.workerId) return err('You cannot delete your own account', 400);
+
+      // Clear all foreign key references before deleting
+      await sql`UPDATE members  SET assigned_to  = NULL WHERE assigned_to  = ${id}`;
+      await sql`UPDATE visits   SET visited_by   = NULL WHERE visited_by   = ${id}`;
+      await sql`UPDATE payments SET recorded_by  = NULL WHERE recorded_by  = ${id}`;
+
+      // Delete user login account
+      await sql`DELETE FROM users WHERE worker_id = ${id}`;
+
+      // Delete worker
+      await sql`DELETE FROM workers WHERE id = ${id}`;
+
+      return ok({ ok: true });
+    }
+
     return err('Method not allowed', 405);
   } catch (e) {
     console.error('workers error', e);
