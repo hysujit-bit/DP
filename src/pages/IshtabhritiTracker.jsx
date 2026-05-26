@@ -162,7 +162,7 @@ export default function IshtabhritiTracker() {
       paymentDate:  today,
       status:       'SENT',
       monthCovered: today.slice(0, 7),
-      recordedBy:   user?.id,
+      recordedBy:   user?.workerId,
     });
     setJustMarked(prev => new Set([...prev, member.id]));
     setJustNotSent(prev => { const s = new Set(prev); s.delete(member.id); return s; });
@@ -175,7 +175,7 @@ export default function IshtabhritiTracker() {
       paymentDate:  today,
       status:       'NOT_SENT',
       monthCovered: today.slice(0, 7),
-      recordedBy:   user?.id,
+      recordedBy:   user?.workerId,
     });
     setJustNotSent(prev => new Set([...prev, member.id]));
   };

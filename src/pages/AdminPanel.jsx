@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { RoleBadge } from '../components/Badge';
 import Modal from '../components/Modal';
@@ -103,13 +103,19 @@ function EditWorkerModal({ open, onClose, worker, onSave, callerRole }) {
   const [form, setForm] = useState({});
   const [showPwd, setShowPwd] = useState(false);
 
-  // Reset form whenever the modal opens with a new worker
-  useState(() => { if (worker) setForm({ name: worker.name, phone: worker.phone || '', role: worker.role, sukId: worker.sukIds?.[0] || 'bngg', newPassword: '' }); }, [worker]);
-
-  // Keep form in sync when worker prop changes
-  if (open && worker && form.name !== undefined && form._id !== worker.id) {
-    setForm({ _id: worker.id, name: worker.name, phone: worker.phone || '', role: worker.role, sukId: worker.sukIds?.[0] || 'bngg', newPassword: '' });
-  }
+  // Correctly reset the form every time the modal opens with a (possibly different) worker
+  useEffect(() => {
+    if (open && worker) {
+      setForm({
+        name:        worker.name       || '',
+        phone:       worker.phone      || '',
+        role:        worker.role       || 'dp_worker',
+        sukId:       worker.sukIds?.[0] || 'bngg',
+        newPassword: '',
+      });
+      setShowPwd(false);
+    }
+  }, [open, worker]);
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   const inp = "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400";

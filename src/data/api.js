@@ -125,6 +125,10 @@ export async function addPayment(data) {
   return request('/payments', { method: 'POST', body: data });
 }
 
+export async function deletePayment(id) {
+  return request(`/payments?id=${id}`, { method: 'DELETE' });
+}
+
 // ─── Drives ───────────────────────────────────────────────────────────────────
 export async function getDrives(sukId) {
   return request(`/drives?sukId=${sukId}`);

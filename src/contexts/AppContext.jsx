@@ -152,6 +152,9 @@ export function AppProvider({ children }) {
   const recordPayment = (data) => {
     api.addPayment(data).then(refresh).catch(e => setError(e.message));
   };
+  const deletePayment = (id) => {
+    api.deletePayment(id).then(refresh).catch(e => setError(e.message));
+  };
 
   // ── Workers ────────────────────────────────────────────────────────────────
   const createWorker = (data) => {
@@ -201,7 +204,7 @@ export function AppProvider({ children }) {
       members, workers, visits, payments, drives,
       loading, error,
       createMember, editMember, deleteMember, bringBack,
-      logVisit, editVisit, recordPayment,
+      logVisit, editVisit, recordPayment, deletePayment,
       createWorker, editWorker, deleteWorker, changePassword,
           createDrive, editDrive, removeDrive,
       refresh,

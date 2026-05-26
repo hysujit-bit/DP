@@ -176,12 +176,12 @@ export default function MySpace() {
   const notSentToday   = useMemo(() => enriched.filter(m => justNotSent.has(m.id)), [enriched, justNotSent]);
 
   const handleMarkSent = (member) => {
-    recordPayment({ personId: member.id, familyCode: member.familyCode, paymentDate: today, status: 'SENT', monthCovered: today.slice(0,7), recordedBy: user?.id });
+    recordPayment({ personId: member.id, familyCode: member.familyCode, paymentDate: today, status: 'SENT', monthCovered: today.slice(0,7), recordedBy: user?.workerId });
     setJustMarked(prev => new Set([...prev, member.id]));
     setJustNotSent(prev => { const s = new Set(prev); s.delete(member.id); return s; });
   };
   const handleMarkNotSent = (member) => {
-    recordPayment({ personId: member.id, familyCode: member.familyCode, paymentDate: today, status: 'NOT_SENT', monthCovered: today.slice(0,7), recordedBy: user?.id });
+    recordPayment({ personId: member.id, familyCode: member.familyCode, paymentDate: today, status: 'NOT_SENT', monthCovered: today.slice(0,7), recordedBy: user?.workerId });
     setJustNotSent(prev => new Set([...prev, member.id]));
   };
 

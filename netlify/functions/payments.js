@@ -66,6 +66,13 @@ exports.handler = async (event) => {
       return ok(toApp(row), 201);
     }
 
+    if (event.httpMethod === 'DELETE') {
+      const { id } = event.queryStringParameters || {};
+      if (!id) return err('id is required');
+      await sql`DELETE FROM payments WHERE id = ${id}`;
+      return ok({ deleted: id });
+    }
+
     return err('Method not allowed', 405);
   } catch (e) {
     console.error('payments error', e);

@@ -316,7 +316,7 @@ export default function LogActivity() {
         const visit = await logVisit({
           personId:   memberId,
           visitDate:  drive.date,
-          visitedBy:  user?.id,
+          visitedBy:  user?.workerId,
           driveId:    drive.id,
           notes:      retroData.notes || '',
           outcome:    outcomeLabel,

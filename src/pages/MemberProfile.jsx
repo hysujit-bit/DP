@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { CategoryBadge, DPStatusBadge, IshtabhritiStatusBadge } from '../components/Badge';
@@ -91,20 +91,29 @@ function CategoryStepper({ current }) {
 }
 
 function LogVisitModal({ open, onClose, member, workerId, onSave }) {
-  const [form, setForm] = useState({ visitDate: new Date().toISOString().split('T')[0], notes: '', outcome: '', nextAction: '' });
+  const [form, setForm] = useState({ visitDate: localToday(), notes: '', outcome: '', nextAction: '' });
   const [saving, setSaving] = useState(false);
   const [saved,  setSaved]  = useState(false);
+
+  // Reset all state every time the modal opens — prevents stale saving/saved/date from previous open
+  useEffect(() => {
+    if (open) {
+      setForm({ visitDate: localToday(), notes: '', outcome: '', nextAction: '' });
+      setSaving(false);
+      setSaved(false);
+    }
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       await onSave({ ...form, personId: member.id, visitedBy: workerId });
+      setSaving(false);
       setSaved(true);
       setTimeout(() => {
         setSaved(false);
         onClose();
-        setForm({ visitDate: new Date().toISOString().split('T')[0], notes: '', outcome: '', nextAction: '' });
       }, 1000);
     } catch {
       setSaving(false);
@@ -149,10 +158,25 @@ function LogVisitModal({ open, onClose, member, workerId, onSave }) {
   );
 }
 
+// Returns today's date in YYYY-MM-DD using LOCAL timezone (avoids UTC off-by-one for IST users)
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function localMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
 function RecordIshtabhritiModal({ open, onClose, member, workerId, onSave }) {
-  const thisMonth = new Date().toISOString().slice(0, 7);
-  const today     = new Date().toISOString().split('T')[0];
-  const [form, setForm] = useState({ paymentDate: today, monthCovered: thisMonth });
+  const [form, setForm] = useState({ paymentDate: localToday(), monthCovered: localMonth() });
+
+  // Reset to today's date every time the modal opens (avoids stale date from old mount)
+  useEffect(() => {
+    if (open) {
+      setForm({ paymentDate: localToday(), monthCovered: localMonth() });
+    }
+  }, [open]);
 
   const handleSave = (status) => {
     onSave({
@@ -225,7 +249,7 @@ function RemoveModal({ open, onClose, member, onRemove }) {
 export default function MemberProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { members, workers, visits, payments, user, logVisit, recordPayment, editMember, deleteMember, bringBack } = useApp();
+  const { members, workers, visits, payments, user, logVisit, recordPayment, deletePayment, editMember, deleteMember, bringBack } = useApp();
 
   const member  = members.find(m => m.id === id);
   const worker  = workers.find(w => w.id === member?.assignedTo);
@@ -332,7 +356,7 @@ export default function MemberProfile() {
             {member.memberCategory !== 'PROSPECT' && (
               <button onClick={() => setIsh(true)}
                 className="flex-1 flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-medium text-sm py-2 rounded-xl transition-colors min-w-[7rem]">
-                <IndianRupee size={15} /> Ishtabhrity
+                <IndianRupee size={15} /> Log Ishtabhrity
               </button>
             )}
             <button onClick={() => setCat(true)}
@@ -626,6 +650,13 @@ export default function MemberProfile() {
                           ✕ Not Sent
                         </span>
                       )}
+                      <button
+                        onClick={() => { if (window.confirm('Delete this payment record?')) deletePayment(p.id); }}
+                        className="p-1.5 text-gray-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                        title="Delete record"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 );
@@ -637,7 +668,7 @@ export default function MemberProfile() {
 
       {/* Modals */}
       <LogVisitModal          open={visitModal} onClose={() => setVis(false)} member={member} workerId={user?.workerId} onSave={handleLogVisit} />
-      <RecordIshtabhritiModal open={ishModal}   onClose={() => setIsh(false)} member={member} workerId={user?.id} onSave={recordPayment} />
+      <RecordIshtabhritiModal open={ishModal}   onClose={() => setIsh(false)} member={member} workerId={user?.workerId} onSave={recordPayment} />
       <RemoveModal            open={rmModal}    onClose={() => setRm(false)}  member={member} onRemove={handleRemove} />
       <CategoryPickerModal
         open={catModal}
