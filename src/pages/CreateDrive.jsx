@@ -227,6 +227,7 @@ export default function CreateDrive() {
     try {
       const drive = await createDrive({
         ...form,
+        title: form.name,
         memberIds: selectedIds,
         status: 'UPCOMING',
       });

@@ -86,6 +86,12 @@ exports.handler = async (event) => {
     )`;
 
     // ── Add new columns to existing tables (idempotent for re-runs) ───────────
+    await sql`ALTER TABLE drives ADD COLUMN IF NOT EXISTS time             TEXT`;
+    await sql`ALTER TABLE drives ADD COLUMN IF NOT EXISTS drive_type       TEXT`;
+    await sql`ALTER TABLE drives ADD COLUMN IF NOT EXISTS meeting_place    TEXT`;
+    await sql`ALTER TABLE drives ADD COLUMN IF NOT EXISTS meeting_location TEXT`;
+    await sql`ALTER TABLE drives ADD COLUMN IF NOT EXISTS target_area      TEXT`;
+
     await sql`ALTER TABLE workers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
     await sql`ALTER TABLE workers ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'dp_worker'`;
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS suk_id TEXT`;

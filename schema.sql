@@ -67,18 +67,30 @@ CREATE INDEX IF NOT EXISTS idx_payments_person_id ON payments(person_id);
 
 -- ─── Drives (Work campaigns) ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS drives (
-  id          TEXT PRIMARY KEY,
-  suk_id      TEXT NOT NULL,
-  title       TEXT NOT NULL,
-  date        DATE NOT NULL,
-  status      TEXT DEFAULT 'UPCOMING',
-  member_ids  TEXT[]  DEFAULT '{}',
-  worker_ids  TEXT[]  DEFAULT '{}',
-  retrospect  JSONB   DEFAULT '{}',
-  notes       TEXT,
-  created_at  TIMESTAMPTZ DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ DEFAULT NOW()
+  id               TEXT PRIMARY KEY,
+  suk_id           TEXT NOT NULL,
+  title            TEXT NOT NULL,
+  date             DATE NOT NULL,
+  time             TEXT,
+  drive_type       TEXT,
+  meeting_place    TEXT,
+  meeting_location TEXT,
+  target_area      TEXT,
+  status           TEXT DEFAULT 'UPCOMING',
+  member_ids       TEXT[]  DEFAULT '{}',
+  worker_ids       TEXT[]  DEFAULT '{}',
+  retrospect       JSONB   DEFAULT '{}',
+  notes            TEXT,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration: add new columns if they don't exist yet (safe to re-run)
+ALTER TABLE drives ADD COLUMN IF NOT EXISTS time             TEXT;
+ALTER TABLE drives ADD COLUMN IF NOT EXISTS drive_type       TEXT;
+ALTER TABLE drives ADD COLUMN IF NOT EXISTS meeting_place    TEXT;
+ALTER TABLE drives ADD COLUMN IF NOT EXISTS meeting_location TEXT;
+ALTER TABLE drives ADD COLUMN IF NOT EXISTS target_area      TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_drives_suk_id ON drives(suk_id);
 CREATE INDEX IF NOT EXISTS idx_drives_status ON drives(status);

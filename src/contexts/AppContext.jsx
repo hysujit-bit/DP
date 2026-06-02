@@ -55,7 +55,7 @@ export function AppProvider({ children }) {
       setAllWorkers(w);
       setVisits(v);
       setPayments(p);
-      setAllDrives(d);
+      setAllDrives(d.map(dr => ({ ...dr, name: dr.name ?? dr.title })));
     } catch (e) {
       console.error('refresh failed', e);
       setError(e.message);
@@ -182,7 +182,7 @@ export function AppProvider({ children }) {
   const createDrive = async (data) => {
     const drive = await api.addDrive({ sukId: currentSukId, ...data });
     refresh().catch(e => setError(e.message));
-    return drive;
+    return { ...drive, name: drive.name ?? drive.title };
   };
   const editDrive = (id, data) => {
     api.updateDrive(id, data).then(refresh).catch(e => setError(e.message));
