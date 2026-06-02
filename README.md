@@ -16,24 +16,6 @@ This will download React, Tailwind CSS, and all dependencies (~2-3 minutes).
 npm run dev
 ```
 
-### Step 3 — Open in browser
-Go to: **http://localhost:5173**
-
----
-
-## Login Credentials (Demo)
-
-| Role      | Email               | Password       |
-|-----------|---------------------|----------------|
-| Admin     | admin@dp.app        | admin123       |
-| Satsangee | pritosh@dp.app      | satsangee123   |
-| Satsangee | debajyoti@dp.app    | satsangee123   |
-| Satsangee | ashok@dp.app        | satsangee123   |
-| Satsangee | ramesh@dp.app       | satsangee123   |
-| Satsangee | priya@dp.app        | satsangee123   |
-
----
-
 ## What's in the App
 
 - **Dashboard** — Stats overview, DA pipeline, members needing visits
