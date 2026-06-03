@@ -99,6 +99,23 @@ exports.handler = async (event) => {
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS suk_id TEXT`;
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
 
+    // ── Audit log table ───────────────────────────────────────────────────────
+    await sql`CREATE TABLE IF NOT EXISTS member_audit_log (
+      id          TEXT PRIMARY KEY,
+      member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+      changed_by  TEXT REFERENCES workers(id),
+      event       TEXT NOT NULL,
+      field       TEXT,
+      old_value   TEXT,
+      new_value   TEXT,
+      changed_at  TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_audit_member_id ON member_audit_log(member_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_audit_changed_at ON member_audit_log(changed_at DESC)`;
+
+    // ── created_by column on members ──────────────────────────────────────────
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS created_by TEXT REFERENCES workers(id)`;
+
     // ── Add new columns to members (idempotent) ───────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS contact_no TEXT`;
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS permanent_address TEXT`;

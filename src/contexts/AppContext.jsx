@@ -123,17 +123,18 @@ export function AppProvider({ children }) {
 
   // ── Members ────────────────────────────────────────────────────────────────
   const createMember = async (data) => {
-    const member = await api.createMember({ sukId: currentSukId, ...data });
+    const member = await api.createMember({ sukId: currentSukId, ...data, changedBy: user?.workerId || null });
     refresh().catch(e => setError(e.message));
     return member;
   };
   const editMember = async (id, data) => {
-    await api.updateMember(id, data);
+    await api.updateMember(id, { ...data, changedBy: user?.workerId || null });
     refresh().catch(e => setError(e.message));
   };
   const deleteMember = (id, reason) => {
-    api.removeMember(id, reason).then(refresh).catch(e => setError(e.message));
+    api.removeMember(id, reason, user?.workerId || null).then(refresh).catch(e => setError(e.message));
   };
+  const fetchAuditLog = (memberId) => api.getAuditLog(memberId);
   const bringBack = (id) => {
     api.restoreMember(id).then(refresh).catch(e => setError(e.message));
   };
@@ -203,7 +204,7 @@ export function AppProvider({ children }) {
       currentSukId, switchSuk,
       members, workers, visits, payments, drives,
       loading, error,
-      createMember, editMember, deleteMember, bringBack,
+      createMember, editMember, deleteMember, bringBack, fetchAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,
       createWorker, editWorker, deleteWorker, changePassword,
           createDrive, editDrive, removeDrive,

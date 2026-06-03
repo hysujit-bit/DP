@@ -8,9 +8,10 @@ import CategoryChangePromptModal, { getCategoryChangeTrigger } from '../componen
 import { VISIT_OUTCOMES, SUKS } from '../constants';
 import {
   Phone, MapPin, ArrowLeft, Edit, Trash2, ExternalLink, Home, CalendarPlus,
-  IndianRupee, CheckCircle2, Clock, RotateCcw, RefreshCw
+  IndianRupee, CheckCircle2, Clock, RotateCcw, RefreshCw, History
 } from 'lucide-react';
 import IshtabhritiTimeline from '../components/IshtabhritiTimeline';
+import AuditLog from '../components/AuditLog';
 
 // ── Category Journey Stepper ───────────────────────────────────────────────────
 const STEPS = [
@@ -249,7 +250,7 @@ function RemoveModal({ open, onClose, member, onRemove }) {
 export default function MemberProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { members, workers, visits, payments, user, logVisit, recordPayment, deletePayment, editMember, deleteMember, bringBack } = useApp();
+  const { members, workers, visits, payments, user, logVisit, recordPayment, deletePayment, editMember, deleteMember, bringBack, fetchAuditLog } = useApp();
 
   const member  = members.find(m => m.id === id);
   const worker  = workers.find(w => w.id === member?.assignedTo);
@@ -258,6 +259,7 @@ export default function MemberProfile() {
   const memberPayments = payments.filter(p => p.personId === id).sort((a,b) => new Date(b.paymentDate) - new Date(a.paymentDate));
 
   const [tab, setTab]              = useState('info');
+  const [showHistory, setShowHistory] = useState(false);
   const [visitModal, setVis]       = useState(false);
   const [ishModal,   setIsh]       = useState(false);
   const [rmModal,    setRm]        = useState(false);
@@ -364,12 +366,30 @@ export default function MemberProfile() {
               title="Change Category">
               <RefreshCw size={15} /> Category
             </button>
+            <button onClick={() => setShowHistory(h => !h)}
+              className={`flex items-center justify-center gap-2 font-medium text-sm px-3 py-2 rounded-xl transition-colors ${showHistory ? 'bg-amber-500 text-white' : 'bg-amber-50 hover:bg-amber-100 text-amber-700'}`}
+              title="Change History">
+              <History size={15} /> History
+            </button>
             {member.geoLocation && (
               <a href={member.geoLocation} target="_blank" rel="noreferrer"
                 className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm px-3 py-2 rounded-xl transition-colors">
                 <ExternalLink size={14} /> Map
               </a>
             )}
+          </div>
+        )}
+
+        {/* Change History Panel */}
+        {showHistory && (
+          <div className="border-b border-gray-100">
+            <div className="flex items-center gap-2 px-5 py-3 bg-amber-50 border-b border-amber-100">
+              <History size={14} className="text-amber-600" />
+              <span className="text-sm font-semibold text-amber-700">Change History</span>
+            </div>
+            <div className="px-5 py-4">
+              <AuditLog memberId={id} fetchAuditLog={fetchAuditLog} />
+            </div>
           </div>
         )}
 

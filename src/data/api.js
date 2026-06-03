@@ -89,10 +89,10 @@ export async function updateMember(id, data) {
   return request(`/members?id=${id}`, { method: 'PATCH', body: data });
 }
 
-export async function removeMember(id, reason) {
+export async function removeMember(id, reason, changedBy = null) {
   return request(`/members?id=${id}`, {
     method: 'DELETE',
-    body: { reason },
+    body: { reason, changedBy },
   });
 }
 
@@ -101,6 +101,11 @@ export async function restoreMember(id) {
     method: 'PATCH',
     body: { isActive: true, removedReason: null, removedAt: null },
   });
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+export async function getAuditLog(memberId) {
+  return request(`/audit?memberId=${memberId}`);
 }
 
 // ─── Visits ───────────────────────────────────────────────────────────────────

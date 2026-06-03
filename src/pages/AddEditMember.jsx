@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { MEMBER_CATEGORIES, DP_STATUSES, ISHTABHRITY_STATUSES, SUKS } from '../constants';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, History } from 'lucide-react';
+import AuditLog from '../components/AuditLog';
 
 const BLANK = {
   name: '', contactNo: '', familyCode: '', guardianName: '', ritwikName: '',
@@ -40,7 +41,7 @@ export default function AddEditMember() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { members, workers, createMember, editMember, currentSukId } = useApp();
+  const { members, workers, createMember, editMember, currentSukId, fetchAuditLog } = useApp();
   const existing = id ? members.find(m => m.id === id) : null;
   const isEdit = !!existing;
 
@@ -89,7 +90,9 @@ export default function AddEditMember() {
   const sel = inp;
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className={isEdit ? 'flex gap-6 items-start' : 'max-w-2xl space-y-4'}>
+    {/* ── Left: form ── */}
+    <div className={isEdit ? 'flex-1 min-w-0 space-y-4' : 'space-y-4'}>
 
       {/* Toast notification */}
       {toast && (
@@ -248,6 +251,34 @@ export default function AddEditMember() {
           </button>
         </div>
       </form>
-    </div>
+    </div>{/* end left form column */}
+
+    {/* ── Right: Change History (edit mode only, desktop) ── */}
+    {isEdit && (
+      <div className="hidden lg:flex flex-col w-80 flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <History size={15} className="text-gray-400" />
+          <h3 className="text-sm font-semibold text-gray-700">Change History</h3>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-[calc(100vh-180px)]">
+          <AuditLog memberId={id} fetchAuditLog={fetchAuditLog} compact />
+        </div>
+      </div>
+    )}
+
+    {/* ── Mobile: Change History below form (edit mode only) ── */}
+    {isEdit && (
+      <div className="lg:hidden bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <History size={15} className="text-gray-400" />
+          <h3 className="text-sm font-semibold text-gray-700">Change History</h3>
+        </div>
+        <div className="p-4">
+          <AuditLog memberId={id} fetchAuditLog={fetchAuditLog} compact />
+        </div>
+      </div>
+    )}
+
+    </div>/* end outer wrapper */
   );
 }

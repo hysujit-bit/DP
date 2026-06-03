@@ -125,6 +125,18 @@ exports.handler = async (event) => {
       `;
 
       const [row] = await sql`SELECT * FROM members WHERE id = ${newId}`;
+
+      // Log creation
+      const createdBy = d.changedBy || caller?.workerId || null;
+      if (createdBy) {
+        await sql`UPDATE members SET created_by = ${createdBy} WHERE id = ${newId}`.catch(() => {});
+      }
+      const auditId = `al_${Date.now().toString(36)}_new`;
+      await sql`
+        INSERT INTO member_audit_log (id, member_id, changed_by, event)
+        VALUES (${auditId}, ${newId}, ${createdBy}, 'member_created')
+      `.catch(() => {});
+
       return ok(toApp(row), 201);
     }
 
@@ -132,6 +144,10 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'PATCH' || event.httpMethod === 'PUT') {
       if (!id) return err('id is required');
       const d = body(event);
+
+      // Fetch current row so we can diff for audit log
+      const [before] = await sql`SELECT * FROM members WHERE id = ${id}`;
+      if (!before) return err('Member not found', 404);
 
       // For restore: explicitly clear removed fields when isActive is being set to true
       const clearRemoved = d.isActive === true;
@@ -180,6 +196,86 @@ exports.handler = async (event) => {
         WHERE id = ${id}
       `;
 
+      // ── Write audit rows for changed fields ─────────────────────────────────
+      const TRACKED = [
+        ['name',                  'Name',                  before.name],
+        ['contact_no',            'Contact Number',        before.contact_no],
+        ['member_category',       'Member Category',       before.member_category],
+        ['ishtabhrity_status',    'Ishtabhrity Status',    before.ishtabhrity_status],
+        ['ishtabhrity_start_date','Ishtabhrity Start Date',before.ishtabhrity_start_date ? String(before.ishtabhrity_start_date).slice(0,10) : null],
+        ['dp_status',             'DP Status',             before.dp_status],
+        ['assigned_to',           'Assigned To',           before.assigned_to],
+        ['address',               'Home Address',          before.address],
+        ['present_address',       'Present Address',       before.present_address],
+        ['permanent_address',     'Permanent Address',     before.permanent_address],
+        ['family_code',           'Family Code',           before.family_code],
+        ['guardian_name',         'Guardian Name',         before.guardian_name],
+        ['ritwik_name',           'Ritwik Name',           before.ritwik_name],
+        ['profession',            'Profession',            before.profession],
+        ['area',                  'Area',                  before.area],
+        ['pin_code',              'Pin Code',              before.pin_code],
+        ['has_asthan',            'Has Thakur Asthan',     String(before.has_asthan)],
+        ['is_adikshita',          'Adikshita',             String(before.is_adikshita)],
+        ['recently_took_dikhya',  'Recently Took Dikhya',  String(before.recently_took_dikhya)],
+        ['plays_harmonium',       'Plays Harmonium',       String(before.plays_harmonium)],
+        ['spouse_prospect',       'Spouse Prospect',       String(before.spouse_prospect)],
+        ['children_prospect',     'Children Prospect',     String(before.children_prospect)],
+        ['interested_in_singing', 'Interested in Singing', String(before.interested_in_singing)],
+        ['can_help_in_dp_work',   'Can Help in DP Work',   String(before.can_help_in_dp_work)],
+        ['comes_to_satsang',      'Comes to Satsang',      String(before.comes_to_satsang)],
+        ['keeps_prayer',          'Keeps Prayer',          String(before.keeps_prayer)],
+        ['keeps_bhadra_satsang',  'Keeps Bhadra Satsang',  String(before.keeps_bhadra_satsang)],
+        ['does_dp_work',          'Does DP Work',          String(before.does_dp_work)],
+        ['goes_to_temple',        'Goes to Temple',        String(before.goes_to_temple)],
+        ['deoghark_visit',        'Deoghark Visit',        String(before.deoghark_visit)],
+        ['swastaini',             'Swastaini',             String(before.swastaini)],
+        ['new_in_bengaluru',      'New in Bengaluru',      String(before.new_in_bengaluru)],
+        ['is_active',             'Active Status',         String(before.is_active)],
+      ];
+
+      // Map incoming d keys to db column names for comparison
+      const incoming = {
+        name: d.name, contact_no: d.contactNo, member_category: d.memberCategory,
+        ishtabhrity_status: d.ishtabhritiStatus,
+        ishtabhrity_start_date: d.ishtabhritiStartDate,
+        dp_status: d.dpStatus, assigned_to: d.assignedTo,
+        address: d.address, present_address: d.presentAddress,
+        permanent_address: d.permanentAddress, family_code: d.familyCode,
+        guardian_name: d.guardianName, ritwik_name: d.ritwikName,
+        profession: d.profession, area: d.area, pin_code: d.pinCode,
+        has_asthan: d.hasAsthan, is_adikshita: d.isAdikshita,
+        recently_took_dikhya: d.recentlyTookDikhya, plays_harmonium: d.playsHarmonium,
+        spouse_prospect: d.spouseProspect, children_prospect: d.childrenProspect,
+        interested_in_singing: d.interestedInSinging, can_help_in_dp_work: d.canHelpInDPWork,
+        comes_to_satsang: d.comesToSatsang, keeps_prayer: d.keepsPrayer,
+        keeps_bhadra_satsang: d.keepsBhadraSatsang, does_dp_work: d.doesDPWork,
+        goes_to_temple: d.goesToTemple, deoghark_visit: d.deogharkVisit,
+        swastaini: d.swastaini, new_in_bengaluru: d.newInBengaluru,
+        is_active: d.isActive,
+      };
+
+      const changedBy = d.changedBy || caller?.workerId || null;
+      const auditRows = [];
+
+      for (const [col, label, oldRaw] of TRACKED) {
+        const newVal = incoming[col];
+        if (newVal === undefined || newVal === null) continue;
+        const oldStr = oldRaw == null ? '' : String(oldRaw);
+        const newStr = String(newVal);
+        if (oldStr === newStr) continue;
+        auditRows.push({ col, label, oldStr, newStr });
+      }
+
+      if (auditRows.length > 0) {
+        for (const { label, oldStr, newStr } of auditRows) {
+          const auditId = `al_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+          await sql`
+            INSERT INTO member_audit_log (id, member_id, changed_by, event, field, old_value, new_value)
+            VALUES (${auditId}, ${id}, ${changedBy}, 'field_changed', ${label}, ${oldStr || null}, ${newStr})
+          `;
+        }
+      }
+
       const [row] = await sql`SELECT * FROM members WHERE id = ${id}`;
       return ok(toApp(row));
     }
@@ -187,13 +283,23 @@ exports.handler = async (event) => {
     // ── DELETE (soft) ─────────────────────────────────────────────────────────
     if (event.httpMethod === 'DELETE') {
       if (!id) return err('id is required');
-      const { reason } = body(event);
+      const d = body(event);
+      const { reason, changedBy } = d;
+      const callerWorkerId = changedBy || caller?.workerId || null;
 
       await sql`
         UPDATE members
         SET is_active = FALSE, removed_reason = ${reason || null}, removed_at = NOW(), updated_at = NOW()
         WHERE id = ${id}
       `;
+
+      // Log removal
+      const auditId = `al_${Date.now().toString(36)}_rem`;
+      await sql`
+        INSERT INTO member_audit_log (id, member_id, changed_by, event, field, old_value, new_value)
+        VALUES (${auditId}, ${id}, ${callerWorkerId}, 'member_removed', 'Active Status', 'true', 'false')
+      `.catch(() => {});
+
       return ok({ ok: true });
     }
 
