@@ -16,6 +16,7 @@ import Definitions from './pages/Definitions';
 import DPPortalStatus from './pages/DPPortalStatus';
 import MySpace from './pages/MySpace';
 import Reports from './pages/Reports';
+import MagazineSubscription from './pages/MagazineSubscription';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user } = useApp();
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="dp-portal" element={<DPPortalStatus />} />
         <Route path="definitions" element={<Definitions />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="magazines" element={<MagazineSubscription />} />
         <Route path="admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
       </Route>
     </Routes>

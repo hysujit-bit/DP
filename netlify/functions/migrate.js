@@ -120,6 +120,53 @@ exports.handler = async (event) => {
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS initiation_date DATE`;
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS alternate_phone TEXT`;
 
+    // ── Magazine subscription tables ──────────────────────────────────────────
+    await sql`CREATE TABLE IF NOT EXISTS suk_magazines (
+      id          TEXT PRIMARY KEY,
+      suk_id      TEXT NOT NULL,
+      name        TEXT NOT NULL,
+      language    TEXT,
+      is_active   BOOLEAN DEFAULT TRUE,
+      sort_order  INT DEFAULT 0,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_suk_magazines_suk ON suk_magazines(suk_id)`;
+
+    await sql`CREATE TABLE IF NOT EXISTS magazine_subscriptions (
+      id               TEXT PRIMARY KEY,
+      suk_id           TEXT NOT NULL,
+      cycle_year       TEXT NOT NULL,
+      member_id        TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+      magazines        TEXT[] DEFAULT '{}',
+      subscribed       BOOLEAN DEFAULT FALSE,
+      paid             BOOLEAN DEFAULT FALSE,
+      monthly_received JSONB DEFAULT '{}',
+      created_at       TIMESTAMPTZ DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(suk_id, cycle_year, member_id)
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_mag_sub_suk_year ON magazine_subscriptions(suk_id, cycle_year)`;
+
+    // Seed default magazines for each SUK (idempotent)
+    const defaultMags = [
+      { id:'mag_urj',  name:'Urjana',      language:'Odia',    order: 1 },
+      { id:'mag_alo',  name:'Alochana',    language:'Bangla',  order: 2 },
+      { id:'mag_sat',  name:'Satwati',     language:'Hindi',   order: 3 },
+      { id:'mag_lig',  name:'Ligate',      language:'English', order: 4 },
+      { id:'mag_swa',  name:'Swastisebak', language:'Bangla',  order: 5 },
+    ];
+    const sukIds = ['bngg','bnas','ejip','garb'];
+    for (const suk of sukIds) {
+      for (const mag of defaultMags) {
+        const magId = `${mag.id}_${suk}`;
+        await sql`
+          INSERT INTO suk_magazines (id, suk_id, name, language, is_active, sort_order)
+          VALUES (${magId}, ${suk}, ${mag.name}, ${mag.language}, true, ${mag.order})
+          ON CONFLICT (id) DO NOTHING
+        `;
+      }
+    }
+
     // ── Add new columns to members (idempotent) ───────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS contact_no TEXT`;
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS permanent_address TEXT`;

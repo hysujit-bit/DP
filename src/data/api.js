@@ -156,3 +156,30 @@ export async function updateDrive(id, data) {
 export async function deleteDrive(id) {
   return request(`/drives?id=${id}`, { method: 'DELETE' });
 }
+
+// ─── Magazines ────────────────────────────────────────────────────────────────
+export async function getMagazineConfig(sukId) {
+  return request(`/magazines?sukId=${sukId}&type=config`);
+}
+export async function getMagazineSubscriptions(sukId, year) {
+  const q = year ? `sukId=${sukId}&year=${year}` : `sukId=${sukId}`;
+  return request(`/magazines?${q}`);
+}
+export async function addMagazineConfig(data) {
+  return request('/magazines?type=config', { method: 'POST', body: data });
+}
+export async function updateMagazineConfig(configId, data) {
+  return request(`/magazines?configId=${configId}`, { method: 'PATCH', body: data });
+}
+export async function deleteMagazineConfig(configId) {
+  return request(`/magazines?configId=${configId}`, { method: 'DELETE' });
+}
+export async function upsertSubscription(data) {
+  return request('/magazines', { method: 'POST', body: data });
+}
+export async function updateSubscription(id, data) {
+  return request(`/magazines?id=${id}`, { method: 'PATCH', body: data });
+}
+export async function deleteSubscription(id) {
+  return request(`/magazines?id=${id}`, { method: 'DELETE' });
+}

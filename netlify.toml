@@ -63,6 +63,12 @@
   status = 200
   force  = true
 
+[[redirects]]
+  from   = "/api/magazines"
+  to     = "/.netlify/functions/magazines"
+  status = 200
+  force  = true
+
 # --- SPA fallback — must come LAST ---
 # Without this, refreshing any page other than "/" gives a 404.
 [[redirects]]
