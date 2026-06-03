@@ -290,4 +290,12 @@ exports.handler = async (event) => {
         workers:  workers.length,
         users:    users.length,
         members: members.length,
-        
+        visits:   visits.length,
+        payments: payments.length,
+      },
+    });
+  } catch (e) {
+    console.error('migrate error', e);
+    return err(e.message || 'Migration failed', 500);
+  }
+};
