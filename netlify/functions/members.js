@@ -55,6 +55,8 @@ function toApp(row) {
     swastaini:            row.swastaini              || false,
     newInBengaluru:       row.new_in_bengaluru       || false,
     // status fields
+    initiationDate:       fmtDate(row.initiation_date),
+    alternatePhone:       row.alternate_phone,
     isActive:             row.is_active,
     isRemoved:            row.is_active === false,
     removedReason:        row.removed_reason,
@@ -104,7 +106,7 @@ exports.handler = async (event) => {
           spouse_prospect, children_prospect, interested_in_singing, can_help_in_dp_work,
           shares_room, stays_in_pg, keeps_prayer, comes_to_satsang,
           keeps_bhadra_satsang, does_dp_work, goes_to_temple, deoghark_visit,
-          swastaini, new_in_bengaluru
+          swastaini, new_in_bengaluru, initiation_date, alternate_phone
         ) VALUES (
           ${newId}, ${d.name}, ${d.contactNo || null}, ${d.address || null},
           ${d.presentAddress || null}, ${d.permanentAddress || null}, ${d.geoLocation || null},
@@ -120,7 +122,8 @@ exports.handler = async (event) => {
           ${d.sharesRoom || false}, ${d.staysInPG || false}, ${d.keepsPrayer || false},
           ${d.comesToSatsang || false}, ${d.keepsBhadraSatsang || false}, ${d.doesDPWork || false},
           ${d.goesToTemple || false}, ${d.deogharkVisit || false},
-          ${d.swastaini || false}, ${d.newInBengaluru || false}
+          ${d.swastaini || false}, ${d.newInBengaluru || false},
+          ${d.initiationDate || null}, ${d.alternatePhone || null}
         )
       `;
 
@@ -189,9 +192,11 @@ exports.handler = async (event) => {
           deoghark_visit        = COALESCE(${d.deogharkVisit       ?? null}, deoghark_visit),
           swastaini             = COALESCE(${d.swastaini           ?? null}, swastaini),
           new_in_bengaluru      = COALESCE(${d.newInBengaluru      ?? null}, new_in_bengaluru),
+          initiation_date       = COALESCE(${d.initiationDate      ?? null}, initiation_date),
+          alternate_phone       = COALESCE(${d.alternatePhone      ?? null}, alternate_phone),
           is_active             = COALESCE(${d.isActive            ?? null}, is_active),
-          removed_reason        = ${clearRemoved ? null : sql`COALESCE(${d.removedReason ?? null}, removed_reason)`},
-          removed_at            = ${clearRemoved ? null : sql`COALESCE(${d.removedAt ?? null}, removed_at)`},
+          removed_reason        = CASE WHEN ${clearRemoved} THEN NULL ELSE COALESCE(${d.removedReason ?? null}, removed_reason) END,
+          removed_at            = CASE WHEN ${clearRemoved} THEN NULL ELSE COALESCE(${d.removedAt     ?? null}, removed_at)     END,
           updated_at            = NOW()
         WHERE id = ${id}
       `;
@@ -230,6 +235,8 @@ exports.handler = async (event) => {
         ['deoghark_visit',        'Deoghark Visit',        String(before.deoghark_visit)],
         ['swastaini',             'Swastaini',             String(before.swastaini)],
         ['new_in_bengaluru',      'New in Bengaluru',      String(before.new_in_bengaluru)],
+        ['initiation_date',       'Initiation Date',       before.initiation_date ? String(before.initiation_date).slice(0,10) : null],
+        ['alternate_phone',       'Alternate Phone',       before.alternate_phone],
         ['is_active',             'Active Status',         String(before.is_active)],
       ];
 
@@ -251,6 +258,7 @@ exports.handler = async (event) => {
         keeps_bhadra_satsang: d.keepsBhadraSatsang, does_dp_work: d.doesDPWork,
         goes_to_temple: d.goesToTemple, deoghark_visit: d.deogharkVisit,
         swastaini: d.swastaini, new_in_bengaluru: d.newInBengaluru,
+        initiation_date: d.initiationDate, alternate_phone: d.alternatePhone,
         is_active: d.isActive,
       };
 
@@ -272,7 +280,7 @@ exports.handler = async (event) => {
           await sql`
             INSERT INTO member_audit_log (id, member_id, changed_by, event, field, old_value, new_value)
             VALUES (${auditId}, ${id}, ${changedBy}, 'field_changed', ${label}, ${oldStr || null}, ${newStr})
-          `;
+          `.catch(() => {}); // non-fatal — don't break the update if audit table missing
         }
       }
 

@@ -6,7 +6,8 @@ import { ArrowLeft, Save, History } from 'lucide-react';
 import AuditLog from '../components/AuditLog';
 
 const BLANK = {
-  name: '', contactNo: '', familyCode: '', guardianName: '', ritwikName: '',
+  name: '', contactNo: '', alternatePhone: '', familyCode: '', guardianName: '', ritwikName: '',
+  initiationDate: '',
   sukId: 'bngg', assignedTo: '',
   memberCategory: 'REGULAR_CONTRIBUTOR', dpStatus: 'FW_PENDING', ishtabhritiStatus: 'IRREGULAR',
   ishtabhritiStartDate: '',
@@ -117,7 +118,9 @@ export default function AddEditMember() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-1 sm:col-span-2"><Field label="Full Name" required><input value={form.name} onChange={set('name')} required placeholder="e.g. Ramesh Kumar" className={inp} /></Field></div>
             <Field label="Contact Number" required><input value={form.contactNo} onChange={set('contactNo')} required placeholder="9876543210" className={inp} /></Field>
+            <Field label="Alternate Phone"><input value={form.alternatePhone} onChange={set('alternatePhone')} placeholder="Alternate number" className={inp} /></Field>
             <Field label="Family Code"><input value={form.familyCode} onChange={set('familyCode')} placeholder="e.g. 022321293091" className={inp} /></Field>
+            <Field label="Initiation Date"><input type="date" value={form.initiationDate} onChange={set('initiationDate')} className={inp} /></Field>
             <Field label="Guardian Name"><input value={form.guardianName} onChange={set('guardianName')} placeholder="Father / Husband name" className={inp} /></Field>
             <Field label="Ritwik Name"><input value={form.ritwikName} onChange={set('ritwikName')} placeholder="Assigned Ritwik" className={inp} /></Field>
           </div>

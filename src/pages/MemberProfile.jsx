@@ -343,6 +343,11 @@ export default function MemberProfile() {
               <Phone size={14} className="text-sky-500" />{member.contactNo}
             </a>
           )}
+          {member.alternatePhone && (
+            <a href={`tel:${member.alternatePhone}`} className="flex items-center gap-1.5 hover:text-sky-700 transition-colors text-gray-500">
+              <Phone size={14} className="text-gray-400" />{member.alternatePhone}
+            </a>
+          )}
           {member.area && <span className="flex items-center gap-1.5"><MapPin size={14} className="text-sky-500" />{member.area}, {sukName}</span>}
           {member.hasAsthan && <span className="flex items-center gap-1.5 text-green-700"><Home size={14} />Has Asthan</span>}
           {member.isAdikshita && <span className="text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full text-xs font-medium">Not yet initiated</span>}
@@ -435,9 +440,11 @@ export default function MemberProfile() {
           {tab === 'info' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               {[
-                { label: 'Family Code',   value: member.familyCode    },
-                { label: 'Profession',    value: member.profession    },
-                { label: 'Ritwik Name',   value: member.ritwikName    },
+                { label: 'Family Code',      value: member.familyCode      },
+                { label: 'Alternate Phone',  value: member.alternatePhone  },
+                { label: 'Initiation Date',  value: member.initiationDate  },
+                { label: 'Profession',       value: member.profession      },
+                { label: 'Ritwik Name',      value: member.ritwikName      },
                 { label: 'Assigned To',   value: worker?.name         },
                 { label: 'PIN Code',      value: member.pinCode       },
                 { label: 'Present Address', value: member.presentAddress, full: true },

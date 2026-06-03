@@ -116,6 +116,10 @@ exports.handler = async (event) => {
     // ── created_by column on members ──────────────────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS created_by TEXT REFERENCES workers(id)`;
 
+    // ── New member fields ─────────────────────────────────────────────────────
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS initiation_date DATE`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS alternate_phone TEXT`;
+
     // ── Add new columns to members (idempotent) ───────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS contact_no TEXT`;
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS permanent_address TEXT`;
