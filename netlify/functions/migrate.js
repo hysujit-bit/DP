@@ -20,6 +20,8 @@ exports.handler = async (event) => {
     return err('Forbidden — provide ?secret=MIGRATE_SECRET', 403);
   }
 
+  const schemaOnly = event.queryStringParameters?.schemaOnly === 'true';
+
   try {
     // ── 1. Create tables (idempotent) ─────────────────────────────────────────
     await sql`CREATE TABLE IF NOT EXISTS workers (
@@ -127,6 +129,10 @@ exports.handler = async (event) => {
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS new_in_bengaluru BOOLEAN DEFAULT FALSE`;
     // Copy legacy phone → contact_no for rows that pre-date this migration
     await sql`UPDATE members SET contact_no = phone WHERE contact_no IS NULL AND phone IS NOT NULL`;
+
+    if (schemaOnly) {
+      return ok({ message: 'Schema migration complete ✅ (schemaOnly — seed skipped)' });
+    }
 
     // ── 2. Upsert workers (fixes suk_ids on re-run) ───────────────────────────
     const workers = [
@@ -284,12 +290,4 @@ exports.handler = async (event) => {
         workers:  workers.length,
         users:    users.length,
         members: members.length,
-        visits:   visits.length,
-        payments: payments.length,
-      },
-    });
-  } catch (e) {
-    console.error('migrate error', e);
-    return err(e.message || 'Migration failed', 500);
-  }
-};
+        
