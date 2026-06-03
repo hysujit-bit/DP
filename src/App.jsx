@@ -15,6 +15,7 @@ import AdminPanel from './pages/AdminPanel';
 import Definitions from './pages/Definitions';
 import DPPortalStatus from './pages/DPPortalStatus';
 import MySpace from './pages/MySpace';
+import Reports from './pages/Reports';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user } = useApp();
@@ -45,6 +46,7 @@ function AppRoutes() {
         <Route path="my-space" element={<MySpace />} />
         <Route path="dp-portal" element={<DPPortalStatus />} />
         <Route path="definitions" element={<Definitions />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
       </Route>
     </Routes>

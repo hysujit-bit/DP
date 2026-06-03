@@ -107,6 +107,12 @@ export async function restoreMember(id) {
 export async function getAuditLog(memberId) {
   return request(`/audit?memberId=${memberId}`);
 }
+export async function getWorkerAuditLog(changedBy) {
+  return request(`/audit?changedBy=${changedBy}`);
+}
+export async function getSukAuditLog(sukId) {
+  return request(`/audit?sukId=${sukId}`);
+}
 
 // ─── Visits ───────────────────────────────────────────────────────────────────
 export async function getVisits(sukId) {

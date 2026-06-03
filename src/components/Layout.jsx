@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import {
-  LayoutDashboard, Users, IndianRupee, Calendar, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, UserPlus, BookOpen, ClipboardList, Zap, Star, Bell, UserCheck, Globe
+  LayoutDashboard, Users, IndianRupee, Calendar, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, UserPlus, BookOpen, ClipboardList, Zap, Star, Bell, UserCheck, Globe, BarChart2
 } from 'lucide-react';
 import { useState } from 'react';
 import { MEMBER_CATEGORIES, SUKS } from '../constants';
@@ -309,6 +309,21 @@ export default function Layout() {
               {label}
             </NavLink>
           ))}
+
+          {/* Reports */}
+          <NavLink to="/reports"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`
+            }
+            onClick={() => setOpen(false)}
+          >
+            <BarChart2 size={18} />
+            Reports
+          </NavLink>
 
           {isAnyAdmin && (
             <NavLink to="/admin"

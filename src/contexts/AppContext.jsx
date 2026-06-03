@@ -135,6 +135,8 @@ export function AppProvider({ children }) {
     api.removeMember(id, reason, user?.workerId || null).then(refresh).catch(e => setError(e.message));
   };
   const fetchAuditLog = (memberId) => api.getAuditLog(memberId);
+  const fetchWorkerAuditLog = (workerId) => api.getWorkerAuditLog(workerId);
+  const fetchSukAuditLog = (sukId) => api.getSukAuditLog(sukId);
   const bringBack = (id) => {
     api.restoreMember(id).then(refresh).catch(e => setError(e.message));
   };
@@ -204,7 +206,7 @@ export function AppProvider({ children }) {
       currentSukId, switchSuk,
       members, workers, visits, payments, drives,
       loading, error,
-      createMember, editMember, deleteMember, bringBack, fetchAuditLog,
+      createMember, editMember, deleteMember, bringBack, fetchAuditLog, fetchWorkerAuditLog, fetchSukAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,
       createWorker, editWorker, deleteWorker, changePassword,
           createDrive, editDrive, removeDrive,
