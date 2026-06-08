@@ -149,7 +149,7 @@ export default function MySpace() {
     // Recent visits by other gurubhais on my members (last 14 days)
     const cutoff = addDays(today, -14);
     visits
-      .filter(v => myMemberIds.has(v.personId) && v.visitedBy && v.visitedBy !== user?.id && v.visitDate >= cutoff)
+      .filter(v => myMemberIds.has(v.personId) && v.visitedBy && v.visitedBy !== user?.workerId && v.visitDate >= cutoff)
       .sort((a, b) => b.visitDate.localeCompare(a.visitDate))
       .slice(0, 10)
       .forEach(v => {
@@ -566,5 +566,4 @@ function IshMemberRow({ m, showMark, onMark, onMarkNotSent, navigate, confirmed,
     );
 
   if (noWrapper) return inner;
-  return inner;
-}
+  return inner

@@ -91,7 +91,7 @@ export default function AddEditMember() {
   const sel = inp;
 
   return (
-    <div className={isEdit ? 'flex gap-6 items-start' : 'max-w-2xl space-y-4'}>
+    <div className={isEdit ? 'flex flex-col lg:flex-row gap-6 lg:items-start' : 'max-w-2xl space-y-4'}>
     {/* ── Left: form ── */}
     <div className={isEdit ? 'flex-1 min-w-0 space-y-4' : 'space-y-4'}>
 
@@ -103,12 +103,13 @@ export default function AddEditMember() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 bg-gray-50 py-2 -mx-1 px-1 flex items-center gap-3">
         <button onClick={() => navigate(isEdit ? `/members/${id}` : '/members')}
-          className="text-gray-500 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100">
-          <ArrowLeft size={18} />
+          className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 px-3 py-2 rounded-xl shadow-sm transition-colors font-medium text-sm flex-shrink-0">
+          <ArrowLeft size={16} />
+          <span>Back</span>
         </button>
-        <h1 className="text-xl font-bold text-gray-900">{isEdit ? `Edit — ${existing?.name}` : 'Add New Member'}</h1>
+        <h1 className="text-lg font-bold text-gray-900 truncate">{isEdit ? `Edit — ${existing?.name}` : 'Add New Member'}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">

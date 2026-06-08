@@ -152,7 +152,7 @@ function AddMemberModal({ open, onClose, members, existingMemberIds, onAdd }) {
   const [selected, setSelected] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const available = members.filter(m => m.isActive && !existingMemberIds.includes(m.id));
+  const available = members.filter(m => !m.isRemoved && !existingMemberIds.includes(m.id));
   if (!open) return null;
 
   const handleAdd = async () => {
@@ -306,7 +306,7 @@ export default function MagazineSubscription() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const sukMembers = members.filter(m => m.sukId === currentSukId && m.isActive);
+  const sukMembers = members.filter(m => m.sukId === currentSukId && !m.isRemoved);
   const years = getPastYears(5);
 
   const loadData = useCallback(async () => {
@@ -512,5 +512,4 @@ export default function MagazineSubscription() {
         onAdd={handleAddMember}
       />
     </div>
-  );
-}
+  )

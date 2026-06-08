@@ -395,14 +395,16 @@ export default function Layout() {
           {/* Spacer pushes button to the right on desktop too */}
           <div className="flex-1" />
 
-          {/* Add Member — always visible top-right */}
-          <button
-            onClick={() => setAddModal(true)}
-            className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors shadow-sm"
-          >
-            <UserPlus size={15} />
-            <span className="hidden sm:inline">Add Member</span>
-          </button>
+          {/* Add Member — admins only */}
+          {isAnyAdmin && (
+            <button
+              onClick={() => setAddModal(true)}
+              className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors shadow-sm"
+            >
+              <UserPlus size={15} />
+              <span className="hidden sm:inline">Add Member</span>
+            </button>
+          )}
         </header>
 
         {/* Page content */}

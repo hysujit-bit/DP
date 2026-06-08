@@ -164,7 +164,15 @@ export function AppProvider({ children }) {
     api.createWorker(data).then(refresh).catch(e => setError(e.message));
   };
   const editWorker = (id, data) => {
-    api.updateWorker(id, data).then(refresh).catch(e => setError(e.message));
+    api.updateWorker(id, data).then(() => {
+      // If the edited worker is the currently logged-in user, sync the session name
+      if (id === user?.workerId && data.name) {
+        const updated = { ...user, name: data.name };
+        localStorage.setItem('dp_session', JSON.stringify(updated));
+        setUser(updated);
+      }
+      return refresh();
+    }).catch(e => setError(e.message));
   };
   const deleteWorker = async (id) => {
     await api.deleteWorker(id);
@@ -208,17 +216,4 @@ export function AppProvider({ children }) {
       loading, error,
       createMember, editMember, deleteMember, bringBack, fetchAuditLog, fetchWorkerAuditLog, fetchSukAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,
-      createWorker, editWorker, deleteWorker, changePassword,
-          createDrive, editDrive, removeDrive,
-      refresh,
-    }}>
-      {children}
-    </AppContext.Provider>
-  );
-}
-
-export function useApp() {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used within AppProvider');
-  return ctx;
-}
+      createWorker, ed
