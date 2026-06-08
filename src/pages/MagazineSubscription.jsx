@@ -512,4 +512,5 @@ export default function MagazineSubscription() {
         onAdd={handleAddMember}
       />
     </div>
-  )
+  );
+}
