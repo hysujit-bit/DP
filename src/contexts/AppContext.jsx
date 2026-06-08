@@ -4,29 +4,21 @@ import * as api from '../data/api';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // ── Auth ───────────────────────────────────────────────────────────────────
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('dp_session');
     return saved ? JSON.parse(saved) : null;
   });
-
-  // ── SUK selection ──────────────────────────────────────────────────────────
   const [currentSukId, setCurrentSukId] = useState(() => {
     return localStorage.getItem('dp_current_suk') || 'bngg';
   });
-
-  // ── Data state ─────────────────────────────────────────────────────────────
   const [allMembers,  setAllMembers]  = useState([]);
   const [allWorkers,  setAllWorkers]  = useState([]);
   const [visits,      setVisits]      = useState([]);
   const [payments,    setPayments]    = useState([]);
   const [allDrives,   setAllDrives]   = useState([]);
-
-  // ── Loading / error ────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
-  // ── Derived — filtered to active SUK ──────────────────────────────────────
   const members = useMemo(
     () => allMembers.filter(m => m.sukId === currentSukId),
     [allMembers, currentSukId]
@@ -40,12 +32,11 @@ export function AppProvider({ children }) {
     [allDrives, currentSukId]
   );
 
-  // ── Refresh — re-fetch everything from the API ─────────────────────────────
   const refresh = useCallback(async () => {
     if (!user) return;
     try {
       const [m, w, v, p, d] = await Promise.all([
-        api.getMembers(currentSukId, true), // include removed so restore works
+        api.getMembers(currentSukId, true),
         api.getWorkers(),
         api.getVisits(currentSukId),
         api.getPayments(currentSukId),
@@ -62,18 +53,15 @@ export function AppProvider({ children }) {
     }
   }, [user, currentSukId]);
 
-  // ── Initial load ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (user) refresh();
   }, [user, refresh]);
 
-  // ── SUK switch ─────────────────────────────────────────────────────────────
   const switchSuk = (sukId) => {
     localStorage.setItem('dp_current_suk', sukId);
     setCurrentSukId(sukId);
   };
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -84,14 +72,10 @@ export function AppProvider({ children }) {
         role:     userData.role,
         name:     userData.name,
         workerId: userData.workerId,
-        sukId:    userData.sukId,    // primary SUK for suk_admin; null for others
+        sukId:    userData.sukId,
       };
       localStorage.setItem('dp_session', JSON.stringify(session));
       setUser(session);
-
-      // Super admin keeps free SUK switching.
-      // SUK admin is locked to their primary sukId.
-      // DP worker is locked to their first assigned SUK.
       if (userData.role === 'suk_admin' && userData.sukId) {
         localStorage.setItem('dp_current_suk', userData.sukId);
         setCurrentSukId(userData.sukId);
@@ -102,7 +86,6 @@ export function AppProvider({ children }) {
         localStorage.setItem('dp_current_suk', defaultSuk);
         setCurrentSukId(defaultSuk);
       }
-
       return { ok: true };
     } catch (e) {
       return { ok: false, error: e.message || 'Invalid email or password' };
@@ -121,7 +104,6 @@ export function AppProvider({ children }) {
     setAllDrives([]);
   };
 
-  // ── Members ────────────────────────────────────────────────────────────────
   const createMember = async (data) => {
     const member = await api.createMember({ sukId: currentSukId, ...data, changedBy: user?.workerId || null });
     refresh().catch(e => setError(e.message));
@@ -141,7 +123,6 @@ export function AppProvider({ children }) {
     api.restoreMember(id).then(refresh).catch(e => setError(e.message));
   };
 
-  // ── Visits ─────────────────────────────────────────────────────────────────
   const logVisit = async (data) => {
     const visit = await api.addVisit(data);
     refresh().catch(e => setError(e.message));
@@ -151,7 +132,6 @@ export function AppProvider({ children }) {
     api.updateVisit(id, patch).then(refresh).catch(e => setError(e.message));
   };
 
-  // ── Payments ───────────────────────────────────────────────────────────────
   const recordPayment = (data) => {
     api.addPayment(data).then(refresh).catch(e => setError(e.message));
   };
@@ -159,13 +139,11 @@ export function AppProvider({ children }) {
     api.deletePayment(id).then(refresh).catch(e => setError(e.message));
   };
 
-  // ── Workers ────────────────────────────────────────────────────────────────
   const createWorker = (data) => {
     api.createWorker(data).then(refresh).catch(e => setError(e.message));
   };
   const editWorker = (id, data) => {
     api.updateWorker(id, data).then(() => {
-      // If the edited worker is the currently logged-in user, sync the session name
       if (id === user?.workerId && data.name) {
         const updated = { ...user, name: data.name };
         localStorage.setItem('dp_session', JSON.stringify(updated));
@@ -179,7 +157,6 @@ export function AppProvider({ children }) {
     await refresh();
   };
 
-  // ── Password change ────────────────────────────────────────────────────────
   const changePassword = async (currentPassword, newPassword) => {
     try {
       await api.changePassword(currentPassword, newPassword);
@@ -189,7 +166,6 @@ export function AppProvider({ children }) {
     }
   };
 
-  // ── Drives ─────────────────────────────────────────────────────────────────
   const createDrive = async (data) => {
     const drive = await api.addDrive({ sukId: currentSukId, ...data });
     refresh().catch(e => setError(e.message));
@@ -202,10 +178,9 @@ export function AppProvider({ children }) {
     api.deleteDrive(id).then(refresh).catch(e => setError(e.message));
   };
 
-  // ── Role helpers ───────────────────────────────────────────────────────────
   const isSuperAdmin = user?.role === 'super_admin';
   const isSukAdmin   = user?.role === 'suk_admin';
-  const isAnyAdmin   = isSuperAdmin || isSukAdmin;  // has Admin Panel access
+  const isAnyAdmin   = isSuperAdmin || isSukAdmin;
 
   return (
     <AppContext.Provider value={{
@@ -217,7 +192,7 @@ export function AppProvider({ children }) {
       createMember, editMember, deleteMember, bringBack, fetchAuditLog, fetchWorkerAuditLog, fetchSukAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,
       createWorker, editWorker, deleteWorker, changePassword,
-          createDrive, editDrive, removeDrive,
+      createDrive, editDrive, removeDrive,
       refresh,
     }}>
       {children}
