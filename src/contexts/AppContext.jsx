@@ -216,4 +216,17 @@ export function AppProvider({ children }) {
       loading, error,
       createMember, editMember, deleteMember, bringBack, fetchAuditLog, fetchWorkerAuditLog, fetchSukAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,
-      createWorker, ed
+      createWorker, editWorker, deleteWorker, changePassword,
+          createDrive, editDrive, removeDrive,
+      refresh,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}
