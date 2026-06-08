@@ -451,7 +451,9 @@ export default function MemberProfile() {
                 { label: 'Permanent Address', value: member.permanentAddress, full: true },
                 { label: 'SUK',           value: sukName              },
                 { label: 'Member Since',  value: member.createdAt     },
-                { label: 'Last Visited',  value: member.lastVisitDate || 'Never' },
+                { label: 'Last Visited',  value: memberVisits.length > 0
+                    ? new Date(memberVisits[0].visitDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : 'Never' },
               ].filter(f => f.value).map(f => (
                 <div key={f.label} className={f.full ? 'col-span-2' : ''}>
                   <div className="text-xs text-gray-400 mb-0.5">{f.label}</div>
