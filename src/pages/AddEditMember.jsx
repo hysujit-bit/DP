@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { MEMBER_CATEGORIES, DP_STATUSES, ISHTABHRITY_STATUSES, SUKS } from '../constants';
-import { ArrowLeft, Save, History } from 'lucide-react';
+import { ArrowLeft, Save, History, Navigation, Loader2 } from 'lucide-react';
 import AuditLog from '../components/AuditLog';
 
 const BLANK = {
-  name: '', contactNo: '', alternatePhone: '', familyCode: '', guardianName: '', ritwikName: '',
+  name: '', serialNo: '', contactNo: '', alternatePhone: '', familyCode: '', guardianName: '', ritwikName: '',
   initiationDate: '',
   sukId: 'bngg', assignedTo: '',
   memberCategory: 'REGULAR_CONTRIBUTOR', dpStatus: 'FW_PENDING', ishtabhritiStatus: 'IRREGULAR',
@@ -35,6 +35,72 @@ function Field({ label, required, children }) {
       </label>
       {children}
     </div>
+  );
+}
+
+
+// ── Live Location capture component ──────────────────────────────────────────
+function LiveLocationButton({ onLocation }) {
+  const [status, setStatus] = useState('idle'); // idle | locating | geocoding | done | error
+
+  const handleCapture = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setStatus('locating');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const geoLocation = `https://maps.google.com/?q=${lat},${lng}`;
+        setStatus('geocoding');
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const area = [addr.suburb, addr.neighbourhood, addr.village, addr.town, addr.city]
+            .filter(Boolean)[0] || '';
+          const presentAddress = data.display_name || '';
+          onLocation({ geoLocation, area, presentAddress });
+        } catch {
+          // Geocoding failed but we still have the map link
+          onLocation({ geoLocation, area: '', presentAddress: '' });
+        }
+        setStatus('done');
+        setTimeout(() => setStatus('idle'), 3000);
+      },
+      (err) => {
+        console.error('Geolocation error', err);
+        setStatus('error');
+        setTimeout(() => setStatus('idle'), 3000);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const labels = {
+    idle:      { text: 'Use My Location',      cls: 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100' },
+    locating:  { text: 'Getting GPS…',          cls: 'bg-sky-50 border-sky-200 text-sky-500 cursor-wait'     },
+    geocoding: { text: 'Fetching address…',     cls: 'bg-sky-50 border-sky-200 text-sky-500 cursor-wait'     },
+    done:      { text: '✓ Location captured',   cls: 'bg-green-50 border-green-200 text-green-700'            },
+    error:     { text: '✕ Could not get location', cls: 'bg-red-50 border-red-200 text-red-600'              },
+  };
+  const { text, cls } = labels[status];
+  const busy = status === 'locating' || status === 'geocoding';
+
+  return (
+    <button
+      type="button"
+      onClick={handleCapture}
+      disabled={busy}
+      className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-sm font-medium transition-colors w-full justify-center ${cls}`}
+    >
+      {busy ? <Loader2 size={15} className="animate-spin" /> : <Navigation size={15} />}
+      {text}
+    </button>
   );
 }
 
@@ -118,6 +184,7 @@ export default function AddEditMember() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Personal Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-1 sm:col-span-2"><Field label="Full Name" required><input value={form.name} onChange={set('name')} required placeholder="e.g. Ramesh Kumar" className={inp} /></Field></div>
+            <Field label="Serial No"><input value={form.serialNo} onChange={set('serialNo')} placeholder="e.g. 042" className={inp} /></Field>
             <Field label="Contact Number" required><input value={form.contactNo} onChange={set('contactNo')} required placeholder="9876543210" className={inp} /></Field>
             <Field label="Alternate Phone"><input value={form.alternatePhone} onChange={set('alternatePhone')} placeholder="Alternate number" className={inp} /></Field>
             <Field label="Family Code"><input value={form.familyCode} onChange={set('familyCode')} placeholder="e.g. 022321293091" className={inp} /></Field>
@@ -228,6 +295,19 @@ export default function AddEditMember() {
         {/* Address */}
         <div className="p-5 space-y-4">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Address</h2>
+
+          {/* Live Location capture */}
+          <LiveLocationButton
+            onLocation={({ geoLocation, area, presentAddress }) => {
+              setForm(f => ({
+                ...f,
+                ...(geoLocation    && { geoLocation }),
+                ...(area           && !f.area           && { area }),
+                ...(presentAddress && !f.presentAddress && { presentAddress }),
+              }));
+            }}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Area / Locality"><input value={form.area} onChange={set('area')} placeholder="e.g. Hulimavu" className={inp} /></Field>
             <Field label="PIN Code"><input value={form.pinCode} onChange={set('pinCode')} placeholder="560076" className={inp} /></Field>

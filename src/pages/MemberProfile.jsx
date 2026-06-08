@@ -360,6 +360,12 @@ export default function MemberProfile() {
               className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium text-sm py-2 rounded-xl transition-colors min-w-[7rem]">
               <CalendarPlus size={15} /> Log Visit
             </button>
+            {member.contactNo && (
+              <a href={`tel:${member.contactNo}`}
+                className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium text-sm py-2 rounded-xl transition-colors min-w-[7rem]">
+                <Phone size={15} /> Call
+              </a>
+            )}
             {member.memberCategory !== 'PROSPECT' && (
               <button onClick={() => setIsh(true)}
                 className="flex-1 flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-medium text-sm py-2 rounded-xl transition-colors min-w-[7rem]">
