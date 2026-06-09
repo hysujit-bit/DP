@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import Layout from './components/Layout';
+import InstallBanner from './components/InstallBanner';
+import UpdateBanner from './components/UpdateBanner';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MembersList from './pages/MembersList';
@@ -60,6 +62,8 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <AppRoutes />
+        <InstallBanner />
+        <UpdateBanner />
       </BrowserRouter>
     </AppProvider>
   );

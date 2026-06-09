@@ -3,10 +3,12 @@
   "short_name": "DP Work",
   "description": "Dharma Prachar member management for Bangalore SUKs",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "theme_color": "#0284c7",
-  "background_color": "#f0f9ff",
+  "background_color": "#0284c7",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -19,6 +21,35 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Members",
+      "short_name": "Members",
+      "description": "View all members",
+      "url": "/members",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Log a Visit",
+      "short_name": "Log Visit",
+      "description": "Log a new member visit",
+      "url": "/dp-work/activity",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "DP Drives",
+      "short_name": "Drives",
+      "description": "View and plan DP drives",
+      "url": "/dp-work",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["productivity", "utilities"],
