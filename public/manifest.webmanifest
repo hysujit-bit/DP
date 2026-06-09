@@ -1,7 +1,7 @@
 {
   "name": "DP Work App",
   "short_name": "DP Work",
-  "description": "Dharma Prachar member management for Bangalore SUKs",
+  "description": "Bengaluru Satsang Local DP APP — SUK-wise DP Activity & Member Tracker",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
