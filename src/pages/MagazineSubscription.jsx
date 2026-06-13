@@ -293,9 +293,10 @@ function SubRow({ sub, magazines, onUpdate, onDelete, readOnly, canManage }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MagazineSubscription() {
-  const { members, currentSukId, isSukAdmin, isSuperAdmin, isAnyAdmin } = useApp();
+  const { members, currentSukId, isSukAdmin, isSuperAdmin, isAnyAdmin, isDpWorker } = useApp();
   const readOnly = false;        // All users can mark checkboxes
-  const canManage = isSukAdmin || isSuperAdmin; // Only admins can add members / manage magazines
+  const canManageConfig = isSukAdmin || isSuperAdmin; // Only admins can manage magazine configs
+  const canManageMembers = isSukAdmin || isSuperAdmin || isDpWorker; // Admins and DP workers can add/delete subscription members
 
   const [year, setYear] = useState(currentCycleYear());
   const [magazines, setMagazines] = useState([]);
@@ -379,7 +380,7 @@ export default function MagazineSubscription() {
           </select>
 
           {/* Manage magazines (Admin only) */}
-          {canManage && (
+          {canManageConfig && (
             <button onClick={() => setShowManage(true)}
               className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
               <Settings size={15} /> Magazines
@@ -466,14 +467,14 @@ export default function MagazineSubscription() {
               <tbody>
                 {subscriptions.length === 0 ? (
                   <tr><td colSpan={magazines.length + 15} className="text-center py-12 text-gray-400 text-sm">
-                    {canManage ? 'No members added yet. Click "+ Add Member" to start.' : 'No subscriptions for this cycle.'}
+                    {canManageMembers ? 'No members added yet. Click "+ Add Member" to start.' : 'No subscriptions for this cycle.'}
                   </td></tr>
                 ) : (
                   subscriptions.map(sub => (
                     <SubRow
                       key={sub.id} sub={sub} magazines={magazines}
                       onUpdate={handleUpdate} onDelete={handleDelete}
-                      readOnly={readOnly} canManage={canManage}
+                      readOnly={readOnly} canManage={canManageMembers}
                     />
                   ))
                 )}
@@ -482,7 +483,7 @@ export default function MagazineSubscription() {
           </div>
 
           {/* Add member button */}
-          {canManage && (
+          {canManageMembers && (
             <div className="p-3 border-t border-gray-100">
               <button onClick={() => setShowAddMember(true)}
                 className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-sky-300 hover:text-sky-600 transition-colors w-full justify-center">

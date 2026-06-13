@@ -181,11 +181,12 @@ export function AppProvider({ children }) {
   const isSuperAdmin = user?.role === 'super_admin';
   const isSukAdmin   = user?.role === 'suk_admin';
   const isAnyAdmin   = isSuperAdmin || isSukAdmin;
+  const isDpWorker   = user?.role === 'dp_worker';
 
   return (
     <AppContext.Provider value={{
       user, login, logout,
-      isSuperAdmin, isSukAdmin, isAnyAdmin,
+      isSuperAdmin, isSukAdmin, isAnyAdmin, isDpWorker,
       currentSukId, switchSuk,
       members, workers, visits, payments, drives,
       loading, error,
