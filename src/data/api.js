@@ -1,6 +1,6 @@
 /**
  * api.js — Frontend API client
- * Replaces storage.js localStorage calls with fetch() calls to Netlify Functions.
+ * Replaces storage.js localStorage calls with fetch() calls to Vercel serverless functions.
  * All functions are async. Token is read from localStorage on each call.
  */
 
