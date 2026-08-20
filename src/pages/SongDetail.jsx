@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
-import { ArrowLeft, Edit, Trash2, Share2, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Share2, Copy, Check, ChevronDown, ChevronUp, X, ZoomIn } from 'lucide-react';
 import { SONG_CATEGORIES } from '../constants';
 
 export default function SongDetail() {
@@ -10,12 +10,25 @@ export default function SongDetail() {
   const { songs, deleteSong } = useApp();
   const [showEnglish, setShowEnglish] = useState(false);
   const [copied, setCopied] = useState(null);
+  const [previewImg, setPreviewImg] = useState(null);
 
   const song = songs.find(s => s.id === id);
 
   useEffect(() => {
     if (!song) navigate('/songs');
   }, [song, navigate]);
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') setPreviewImg(null); };
+    if (previewImg) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = '';
+    };
+  }, [previewImg]);
 
   if (!song) return null;
 
@@ -26,15 +39,39 @@ export default function SongDetail() {
     }
   };
 
-  const handleShare = () => {
-    const shareData = {
-      title: song.title,
-      text: `${song.title} - ${song.author || 'Unknown'}\n\n${song.lyrics || ''}`,
-    };
+  const base64ToBlob = (base64) => {
+    const parts = base64.split(',');
+    const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const raw = atob(parts[1]);
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleShare = async () => {
+    const shareText = `${song.title} - ${song.author || 'Unknown'}\n\n${song.lyrics || ''}`;
+
+    if (navigator.share && song.pageImages?.length > 0) {
+      try {
+        const files = song.pageImages.slice(0, 4).map((img, i) => {
+          const blob = base64ToBlob(img);
+          return new File([blob], `page-${i + 1}.jpg`, { type: 'image/jpeg' });
+        });
+        await navigator.share({
+          title: song.title,
+          text: shareText,
+          files,
+        });
+        return;
+      } catch (e) {
+        // user cancelled or file share not supported — fall through to text share
+      }
+    }
+
     if (navigator.share) {
-      navigator.share(shareData).catch(() => {});
+      await navigator.share({ title: song.title, text: shareText }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(shareData.text);
+      navigator.clipboard.writeText(shareText);
       setCopied('lyrics');
       setTimeout(() => setCopied(null), 2000);
     }
@@ -174,15 +211,22 @@ export default function SongDetail() {
           </div>
         )}
 
-        {/* Page images */}
+        {/* Page images — clickable */}
         {song.pageImages && song.pageImages.length > 0 && (
           <div className="px-5 py-4 border-b border-gray-100">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Scanned Pages</h3>
             <div className="grid grid-cols-2 gap-2">
               {song.pageImages.map((img, i) => (
-                <div key={i} className="rounded-lg overflow-hidden border border-gray-200">
+                <button
+                  key={i}
+                  onClick={() => setPreviewImg(img)}
+                  className="rounded-lg overflow-hidden border border-gray-200 hover:ring-2 hover:ring-sky-300 transition-all relative group cursor-pointer"
+                >
                   <img src={img} alt={`Page ${i + 1}`} className="w-full h-auto" />
-                </div>
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ZoomIn size={24} className="text-white" />
+                  </div>
+                </button>
               ))}
             </div>
           </div>
@@ -228,6 +272,27 @@ export default function SongDetail() {
           <> · Updated {new Date(song.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</>
         )}
       </div>
+
+      {/* Fullscreen image preview */}
+      {previewImg && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPreviewImg(null)}
+        >
+          <button
+            onClick={() => setPreviewImg(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white z-10"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImg}
+            alt="Preview"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

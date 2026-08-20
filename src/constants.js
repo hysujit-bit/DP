@@ -46,7 +46,7 @@ export const VISIT_OUTCOMES = [
 // ─── Songs Module ────────────────────────────────────────────────────────────
 export const SONG_CATEGORIES = {
   BHAJAN: { label: 'Bhajan', color: 'orange', bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' },
-  KORA:   { label: 'Kora',   color: 'purple', bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
+  KORA:   { label: 'Koras',   color: 'purple', bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
   KIRTAN: { label: 'Kirtan', color: 'green',  bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-200'  },
 };
 
