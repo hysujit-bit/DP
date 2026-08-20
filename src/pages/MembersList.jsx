@@ -16,6 +16,7 @@ export default function MembersList() {
   const [dpFilter, setDp]         = useState('');
   const [ishFilter, setIsh]       = useState('');
   const [showRemoved, setShowRm]  = useState(false);
+  const [ivFilter, setIv]         = useState('');
   const [showFilters, setShowF]   = useState(() => !!searchParams.get('cat'));
 
   // Sync cat filter when sidebar category link changes
@@ -36,8 +37,14 @@ export default function MembersList() {
       .filter(m => !sukFilter || m.sukId === sukFilter)
       .filter(m => !dpFilter  || m.dpStatus === dpFilter)
       .filter(m => !ishFilter || m.ishtabhritiStatus === ishFilter)
+      .filter(m => {
+        if (!ivFilter) return true;
+        if (ivFilter === 'online') return m.ivOnline === true;
+        if (ivFilter === 'offline') return m.ivOnline === false;
+        return true;
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [members, search, catFilter, sukFilter, dpFilter, ishFilter, showRemoved]);
+  }, [members, search, catFilter, sukFilter, dpFilter, ishFilter, ivFilter, showRemoved]);
 
   const filtersActive = !!(catFilter || sukFilter || dpFilter || ishFilter);
 
@@ -73,12 +80,13 @@ export default function MembersList() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
             { label: 'Category',    value: catFilter, set: setCat, opts: Object.entries(MEMBER_CATEGORIES).map(([k,v]) => ({ val: k, label: v.label })) },
             { label: 'SUK',         value: sukFilter, set: setSuk, opts: SUKS.map(s => ({ val: s.id, label: s.name })) },
             { label: 'DP Status',   value: dpFilter,  set: setDp,  opts: Object.entries(DP_STATUSES).map(([k,v]) => ({ val: k, label: v.label })) },
             { label: 'Ishtabhrity', value: ishFilter, set: setIsh, opts: Object.entries(ISHTABHRITY_STATUSES).map(([k,v]) => ({ val: k, label: v.label })) },
+            { label: 'IV Status',   value: ivFilter,  set: setIv,  opts: [{ val: 'online', label: 'IV Online' }, { val: 'offline', label: 'IV Offline' }] },
           ].map(f => (
             <div key={f.label}>
               <label className="block text-xs font-medium text-gray-500 mb-1">{f.label}</label>
@@ -89,12 +97,12 @@ export default function MembersList() {
               </select>
             </div>
           ))}
-          <div className="col-span-2 md:col-span-4 flex items-center justify-between border-t pt-3 mt-1">
+          <div className="col-span-2 md:col-span-5 flex items-center justify-between border-t pt-3 mt-1">
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input type="checkbox" checked={showRemoved} onChange={e => setShowRm(e.target.checked)} className="rounded" />
               Show removed members
             </label>
-            <button onClick={() => { setCat(''); setSuk(''); setDp(''); setIsh(''); setShowRm(false); }}
+            <button onClick={() => { setCat(''); setSuk(''); setDp(''); setIsh(''); setIv(''); setShowRm(false); }}
               className="text-xs text-sky-700 hover:underline px-2 py-2">Clear all</button>
           </div>
         </div>
@@ -128,6 +136,11 @@ export default function MembersList() {
                   <CategoryBadge category={m.memberCategory} />
                   {m.memberCategory !== 'PROSPECT' && <DPStatusBadge status={m.dpStatus} />}
                   {m.memberCategory !== 'PROSPECT' && <IshtabhritiStatusBadge status={m.ishtabhritiStatus} />}
+                  {m.ivOnline !== undefined && (
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${m.ivOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                      {m.ivOnline ? '🟢 IV Online' : '🔴 IV Offline'}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
                   {m.contactNo && <span className="flex items-center gap-1"><Phone size={11} />{m.contactNo}</span>}

@@ -54,6 +54,7 @@ function toApp(row) {
     deogharkVisit:        row.deoghark_visit         || false,
     swastaini:            row.swastaini              || false,
     newInBengaluru:       row.new_in_bengaluru       || false,
+    ivOnline:             row.iv_online              || false,
     photoUrl:             row.photo_url,
     // status fields
     initiationDate:       fmtDate(row.initiation_date),
@@ -107,7 +108,7 @@ const handler = async (event) => {
           spouse_prospect, children_prospect, interested_in_singing, can_help_in_dp_work,
           shares_room, stays_in_pg, keeps_prayer, comes_to_satsang,
           keeps_bhadra_satsang, does_dp_work, goes_to_temple, deoghark_visit,
-          swastaini, new_in_bengaluru, initiation_date, alternate_phone, photo_url
+          swastaini, new_in_bengaluru, initiation_date, alternate_phone, photo_url, iv_online
         ) VALUES (
           ${newId}, ${d.name}, ${d.contactNo || null}, ${d.address || null},
           ${d.presentAddress || null}, ${d.permanentAddress || null}, ${d.geoLocation || null},
@@ -125,7 +126,7 @@ const handler = async (event) => {
           ${d.goesToTemple || false}, ${d.deogharkVisit || false},
           ${d.swastaini || false}, ${d.newInBengaluru || false},
           ${d.initiationDate || null}, ${d.alternatePhone || null},
-          ${d.photoUrl || null}
+          ${d.photoUrl || null}, ${d.ivOnline || false}
         )
       `;
 
@@ -197,6 +198,7 @@ const handler = async (event) => {
           initiation_date       = COALESCE(${d.initiationDate      ?? null}, initiation_date),
           alternate_phone       = COALESCE(${d.alternatePhone      ?? null}, alternate_phone),
           photo_url             = COALESCE(${d.photoUrl            ?? null}, photo_url),
+          iv_online             = COALESCE(${d.ivOnline            ?? null}, iv_online),
           is_active             = COALESCE(${d.isActive            ?? null}, is_active),
           removed_reason        = CASE WHEN ${clearRemoved} THEN NULL ELSE COALESCE(${d.removedReason ?? null}, removed_reason) END,
           removed_at            = CASE WHEN ${clearRemoved} THEN NULL ELSE COALESCE(${d.removedAt     ?? null}, removed_at)     END,
@@ -241,6 +243,7 @@ const handler = async (event) => {
         ['initiation_date',       'Initiation Date',       before.initiation_date ? String(before.initiation_date).slice(0,10) : null],
         ['alternate_phone',       'Alternate Phone',       before.alternate_phone],
         ['photo_url',             'Profile Photo',         before.photo_url],
+        ['iv_online',             'IV Online',             String(before.iv_online)],
         ['is_active',             'Active Status',         String(before.is_active)],
       ];
 
@@ -264,6 +267,7 @@ const handler = async (event) => {
         swastaini: d.swastaini, new_in_bengaluru: d.newInBengaluru,
         initiation_date: d.initiationDate, alternate_phone: d.alternatePhone,
         photo_url: d.photoUrl,
+        iv_online: d.ivOnline,
         is_active: d.isActive,
       };
 

@@ -122,6 +122,7 @@ const handler = async (event) => {
     // ── New member fields ─────────────────────────────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS initiation_date DATE`;
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS alternate_phone TEXT`;
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS iv_online BOOLEAN DEFAULT FALSE`;
 
     // ── Magazine subscription tables ──────────────────────────────────────────
     await sql`CREATE TABLE IF NOT EXISTS suk_magazines (

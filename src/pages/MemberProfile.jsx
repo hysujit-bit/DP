@@ -355,6 +355,11 @@ export default function MemberProfile() {
           {member.area && <span className="flex items-center gap-1.5"><MapPin size={14} className="text-sky-500" />{member.area}, {sukName}</span>}
           {member.hasAsthan && <span className="flex items-center gap-1.5 text-green-700"><Home size={14} />Has Asthan</span>}
           {member.isAdikshita && <span className="text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full text-xs font-medium">Not yet initiated</span>}
+          {member.ivOnline !== undefined && (
+            <span className={`flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${member.ivOnline ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+              {member.ivOnline ? '✅ IV Online' : '❌ IV Offline'}
+            </span>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -509,6 +514,7 @@ export default function MemberProfile() {
                   { key: 'deogharkVisit',       label: 'Deoghar Visit'           },
                   { key: 'swastaini',           label: 'Swastaini'               },
                   { key: 'newInBengaluru',      label: 'New in Bengaluru'        },
+                  { key: 'ivOnline',            label: 'IV Online'               },
                 ].filter(a => member[a.key]);
 
                 return attrs.length > 0 ? (

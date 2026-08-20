@@ -387,6 +387,7 @@ const ATTRIBUTES = [
   { key: 'deogharkVisit',      label: 'Deoghark Visit'          },
   { key: 'swastaini',          label: 'Swastaini'               },
   { key: 'newInBengaluru',     label: 'New in Bengaluru'        },
+  { key: 'ivOnline',           label: 'IV Online'               },
 ];
 
 function AttributeReport({ members, workers, scopeSukIds, isSuperAdmin }) {
@@ -762,6 +763,165 @@ function IshtabhritiReport({ members, payments, workers, scopeSukIds, isSuperAdm
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// R8 — IV Online Status Report
+// ════════════════════════════════════════════════════════════════════════════
+function IVOnlineReport({ members, workers, scopeSukIds, isSuperAdmin }) {
+  const [exporting, setExporting] = useState(false);
+  const [filter, setFilter] = useState('all'); // all | online | offline
+
+  const scopeMembers = isSuperAdmin
+    ? members.filter(m => m.isActive)
+    : members.filter(m => m.isActive && scopeSukIds?.includes(m.sukId));
+
+  const onlineCount = scopeMembers.filter(m => m.ivOnline === true).length;
+  const offlineCount = scopeMembers.filter(m => m.ivOnline === false || m.ivOnline === undefined || m.ivOnline === null).length;
+  const percentage = scopeMembers.length > 0 ? Math.round((onlineCount / scopeMembers.length) * 100) : 0;
+
+  const filtered = useMemo(() => {
+    if (filter === 'online') return scopeMembers.filter(m => m.ivOnline === true);
+    if (filter === 'offline') return scopeMembers.filter(m => m.ivOnline === false || m.ivOnline === undefined || m.ivOnline === null);
+    return scopeMembers;
+  }, [scopeMembers, filter]);
+
+  const handleExcel = async () => {
+    setExporting(true);
+    await exportToExcel([{
+      name: 'IV Online Status',
+      data: filtered.map(m => ({
+        Name: m.name,
+        SUK: SUKS.find(s => s.id === m.sukId)?.name || m.sukId,
+        Category: MEMBER_CATEGORIES[m.memberCategory]?.label || m.memberCategory,
+        Assigned: workers.find(w => w.id === m.assignedTo)?.name || 'Unassigned',
+        Phone: m.contactNo || '',
+        'IV Status': m.ivOnline ? 'Online' : 'Offline',
+      })),
+    }], 'IV_Online_Status_Report');
+    setExporting(false);
+  };
+
+  const handlePDF = async () => {
+    setExporting(true);
+    await exportToPDF(
+      `IV Online Status Report — ${filter === 'online' ? 'Online Only' : filter === 'offline' ? 'Offline Only' : 'All Members'}`,
+      ['Name', 'SUK', 'Category', 'Assigned To', 'Phone', 'IV Status'],
+      filtered.map(m => [
+        m.name,
+        SUKS.find(s => s.id === m.sukId)?.name || m.sukId,
+        MEMBER_CATEGORIES[m.memberCategory]?.label || m.memberCategory,
+        workers.find(w => w.id === m.assignedTo)?.name || 'Unassigned',
+        m.contactNo || '—',
+        m.ivOnline ? 'Online' : 'Offline',
+      ]),
+      'IV_Online_Status_Report'
+    );
+    setExporting(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="Total Members" value={scopeMembers.length} color="sky" />
+        <StatCard label="IV Online" value={onlineCount} sub={`${percentage}%`} color="green" />
+        <StatCard label="IV Offline" value={offlineCount} sub={`${100 - percentage}%`} color="red" />
+        <StatCard label="Completion" value={`${percentage}%`} sub={percentage >= 80 ? 'On track' : 'Needs attention'} color={percentage >= 80 ? 'green' : 'amber'} />
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-700">IV Online Progress</h4>
+          <span className="text-xs text-gray-500">{onlineCount} of {scopeMembers.length} members</span>
+        </div>
+        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-all"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1 text-xs text-gray-400">
+          <span>0%</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      {/* Filter + Export */}
+      <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex gap-2">
+            {[
+              { val: 'all', label: `All (${scopeMembers.length})` },
+              { val: 'online', label: `Online (${onlineCount})` },
+              { val: 'offline', label: `Offline (${offlineCount})` },
+            ].map(opt => (
+              <button key={opt.val} onClick={() => setFilter(opt.val)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  filter === opt.val
+                    ? 'bg-sky-500 text-white border-sky-500'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-sky-300'
+                }`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleExcel} disabled={exporting}
+              className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors">
+              <FileSpreadsheet size={13} /> Excel
+            </button>
+            <button onClick={handlePDF} disabled={exporting}
+              className="flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+              <FileText size={13} /> PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">SUK</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Category</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Assigned To</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Phone</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">IV Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400">No members found</td></tr>
+              ) : filtered.map(m => {
+                const w = workers.find(x => x.id === m.assignedTo);
+                return (
+                  <tr key={m.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{m.name}</td>
+                    <td className="px-4 py-3 text-gray-600">{SUKS.find(s => s.id === m.sukId)?.name || m.sukId}</td>
+                    <td className="px-4 py-3 text-gray-600">{MEMBER_CATEGORIES[m.memberCategory]?.label || m.memberCategory}</td>
+                    <td className="px-4 py-3 text-gray-600">{w?.name || 'Unassigned'}</td>
+                    <td className="px-4 py-3 text-gray-600">{m.contactNo || '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                        m.ivOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                      }`}>
+                        {m.ivOnline ? '🟢 Online' : '🔴 Offline'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // MAIN — Reports Page
 // ════════════════════════════════════════════════════════════════════════════
 const TABS = [
@@ -772,6 +932,7 @@ const TABS = [
   { id: 'workers-perf',      label: 'Workers Performance', icon: TrendingUp,  roles: ['super_admin','suk_admin'] },
   { id: 'planner',           label: 'Planner',             icon: Calendar,    roles: ['super_admin','suk_admin','dp_worker'] },
   { id: 'ishtabhrity',       label: 'Ishtabhrity',         icon: IndianRupee, roles: ['super_admin','suk_admin','dp_worker'] },
+  { id: 'iv-online',         label: 'IV Online Status',    icon: CheckCircle2, roles: ['super_admin','suk_admin','dp_worker'] },
 ];
 
 export default function Reports() {
@@ -866,6 +1027,12 @@ export default function Reports() {
             members={scopeMembers} payments={payments} workers={workers}
             scopeSukIds={scopeSukIds} isSuperAdmin={isSuperAdmin}
             currentUser={user} isAnyAdmin={isAnyAdmin}
+          />
+        )}
+        {activeTab === 'iv-online' && (
+          <IVOnlineReport
+            members={scopeMembers} workers={workers}
+            scopeSukIds={scopeSukIds} isSuperAdmin={isSuperAdmin}
           />
         )}
       </div>

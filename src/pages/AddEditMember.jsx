@@ -21,6 +21,7 @@ const BLANK = {
   keepsBhadraSatsang: false, doesDPWork: false,
   goesToTemple: false, deogharkVisit: false,
   swastaini: false, newInBengaluru: false,
+  ivOnline: false,
   profession: '',
   area: '', pinCode: '', permanentAddress: '', presentAddress: '', geoLocation: '',
   photoUrl: '',
@@ -290,6 +291,7 @@ export default function AddEditMember() {
                 { key: 'deogharkVisit',        label: 'Deoghar Visit'              },
                 { key: 'swastaini',            label: 'Swastaini'                  },
                 { key: 'newInBengaluru',       label: 'New in Bengaluru'           },
+                { key: 'ivOnline',             label: 'IV Online (sends Ishtabhrity online)' },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2.5 cursor-pointer group">
                   <input
