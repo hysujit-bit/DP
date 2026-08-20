@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import {
-  LayoutDashboard, Users, IndianRupee, Calendar, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, UserPlus, BookOpen, ClipboardList, Zap, Star, Bell, UserCheck, Globe, BarChart2, Newspaper
+  LayoutDashboard, Users, IndianRupee, Calendar, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, UserPlus, BookOpen, ClipboardList, Zap, Star, Bell, UserCheck, Globe, BarChart2, Newspaper, Music
 } from 'lucide-react';
 import { useState } from 'react';
 import { MEMBER_CATEGORIES, SUKS } from '../constants';
@@ -323,6 +323,21 @@ export default function Layout() {
           >
             <Newspaper size={18} />
             Magazines
+          </NavLink>
+
+          {/* Songs */}
+          <NavLink to="/songs"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`
+            }
+            onClick={() => setOpen(false)}
+          >
+            <Music size={18} />
+            Songs
           </NavLink>
 
           {/* Reports */}

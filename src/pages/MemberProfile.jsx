@@ -8,7 +8,7 @@ import CategoryChangePromptModal, { getCategoryChangeTrigger } from '../componen
 import { VISIT_OUTCOMES, SUKS } from '../constants';
 import {
   Phone, MapPin, ArrowLeft, Edit, Trash2, ExternalLink, Home, CalendarPlus,
-  IndianRupee, CheckCircle2, Clock, RotateCcw, RefreshCw, History
+  IndianRupee, CheckCircle2, Clock, RotateCcw, RefreshCw, History, Share2
 } from 'lucide-react';
 import IshtabhritiTimeline from '../components/IshtabhritiTimeline';
 import AuditLog from '../components/AuditLog';
@@ -319,8 +319,12 @@ export default function MemberProfile() {
       {/* Member card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-sky-50 to-sky-50 px-5 py-4 flex items-start gap-4">
-          <div className="w-14 h-14 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-            {member.name.charAt(0)}
+          <div className="w-14 h-14 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0 overflow-hidden">
+            {member.photoUrl ? (
+              <img src={member.photoUrl} alt={member.name} className="w-full h-full object-cover" />
+            ) : (
+              member.name.charAt(0)
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-gray-900">{member.name}</h1>
@@ -381,6 +385,24 @@ export default function MemberProfile() {
               className={`flex items-center justify-center gap-2 font-medium text-sm px-3 py-2 rounded-xl transition-colors ${showHistory ? 'bg-amber-500 text-white' : 'bg-amber-50 hover:bg-amber-100 text-amber-700'}`}
               title="Change History">
               <History size={15} /> History
+            </button>
+            <button
+              onClick={() => {
+                const shareData = {
+                  title: member.name,
+                  text: `${member.name} - ${member.memberCategory.replace(/_/g, ' ')}`,
+                  url: window.location.href,
+                };
+                if (navigator.share) {
+                  navigator.share(shareData).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Profile link copied to clipboard!');
+                }
+              }}
+              className="flex items-center justify-center gap-2 bg-sky-50 hover:bg-sky-100 text-sky-700 font-medium text-sm px-3 py-2 rounded-xl transition-colors"
+              title="Share Profile">
+              <Share2 size={15} /> Share
             </button>
             {member.geoLocation && (
               <a href={member.geoLocation} target="_blank" rel="noreferrer"

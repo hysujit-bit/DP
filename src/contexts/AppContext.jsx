@@ -16,6 +16,7 @@ export function AppProvider({ children }) {
   const [visits,      setVisits]      = useState([]);
   const [payments,    setPayments]    = useState([]);
   const [allDrives,   setAllDrives]   = useState([]);
+  const [songs,       setSongs]       = useState([]);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
@@ -56,6 +57,20 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (user) refresh();
   }, [user, refresh]);
+
+  // ─── Songs (global, no SUK filtering) ────────────────────────────────────────
+  const refreshSongs = useCallback(async (filters = {}) => {
+    try {
+      const data = await api.getSongs(filters);
+      setSongs(data);
+    } catch (e) {
+      console.error('refreshSongs failed', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) refreshSongs();
+  }, [user, refreshSongs]);
 
   const switchSuk = (sukId) => {
     localStorage.setItem('dp_current_suk', sukId);
@@ -178,6 +193,21 @@ export function AppProvider({ children }) {
     api.deleteDrive(id).then(refresh).catch(e => setError(e.message));
   };
 
+  // ─── Song actions ────────────────────────────────────────────────────────────
+  const createSong = async (data) => {
+    const song = await api.createSong(data);
+    refreshSongs();
+    return song;
+  };
+  const editSong = async (id, data) => {
+    await api.updateSong(id, data);
+    refreshSongs();
+  };
+  const deleteSong = async (id) => {
+    await api.deleteSong(id);
+    refreshSongs();
+  };
+
   const isSuperAdmin = user?.role === 'super_admin';
   const isSukAdmin   = user?.role === 'suk_admin';
   const isAnyAdmin   = isSuperAdmin || isSukAdmin;
@@ -189,6 +219,7 @@ export function AppProvider({ children }) {
       isSuperAdmin, isSukAdmin, isAnyAdmin, isDpWorker,
       currentSukId, switchSuk,
       members, workers, visits, payments, drives,
+      songs, refreshSongs, createSong, editSong, deleteSong,
       loading, error,
       createMember, editMember, deleteMember, bringBack, fetchAuditLog, fetchWorkerAuditLog, fetchSukAuditLog,
       logVisit, editVisit, recordPayment, deletePayment,

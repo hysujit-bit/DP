@@ -99,6 +99,9 @@ const handler = async (event) => {
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS suk_id TEXT`;
     await sql`ALTER TABLE users   ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
 
+    // ── Profile picture column on members ─────────────────────────────────────
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS photo_url TEXT`;
+
     // ── Audit log table ───────────────────────────────────────────────────────
     await sql`CREATE TABLE IF NOT EXISTS member_audit_log (
       id          TEXT PRIMARY KEY,
@@ -166,6 +169,37 @@ const handler = async (event) => {
         `;
       }
     }
+
+    // ── Songs table (global — no SUK hierarchy) ───────────────────────────────
+    await sql`CREATE TABLE IF NOT EXISTS songs (
+      id                TEXT PRIMARY KEY,
+      title             TEXT NOT NULL,
+      author            TEXT,
+      language          TEXT DEFAULT 'Odia',
+      title_search      TEXT NOT NULL,
+      author_search     TEXT,
+      lyrics            TEXT,
+      lyrics_search     TEXT,
+      category          TEXT NOT NULL DEFAULT 'BHAJAN',
+      tags              TEXT[] DEFAULT '{}',
+      search_keywords   TEXT,
+      content_type      TEXT DEFAULT 'text',
+      page_images       TEXT[] DEFAULT '{}',
+      pdf_files         TEXT[] DEFAULT '{}',
+      book_source       TEXT,
+      page_number       INT,
+      notes             TEXT,
+      is_active         BOOLEAN DEFAULT TRUE,
+      created_by        TEXT REFERENCES workers(id),
+      created_at        TIMESTAMPTZ DEFAULT NOW(),
+      updated_at        TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_songs_category ON songs(category)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_songs_language ON songs(language)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_songs_tags ON songs USING GIN(tags)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_songs_search ON songs USING GIN(
+      to_tsvector('english', coalesce(title_search,'') || ' ' || coalesce(lyrics_search,'') || ' ' || coalesce(author_search,''))
+    )`;
 
     // ── Add new columns to members (idempotent) ───────────────────────────────
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS contact_no TEXT`;
@@ -353,7 +387,7 @@ const handler = async (event) => {
 
     return ok({
       message: 'Migration complete ✅',
-      tables:  ['workers','members','visits','payments','drives','users'],
+      tables:  ['workers','members','visits','payments','drives','users','songs'],
       seeded:  {
         workers:  workers.length,
         users:    users.length,

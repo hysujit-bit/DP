@@ -42,3 +42,25 @@ export const VISIT_OUTCOMES = [
   'Dikhya taken',
   'Other',
 ];
+
+// ─── Songs Module ────────────────────────────────────────────────────────────
+export const SONG_CATEGORIES = {
+  BHAJAN: { label: 'Bhajan', color: 'orange', bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' },
+  KORA:   { label: 'Kora',   color: 'purple', bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
+  KIRTAN: { label: 'Kirtan', color: 'green',  bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-200'  },
+};
+
+export const SONG_LANGUAGES = [
+  'Odia', 'Hindi', 'Bengali', 'English', 'Kannada', 'Telugu', 'Tamil', 'Marathi', 'Other'
+];
+
+export const SONG_TAGS = [
+  'Krishna', 'Ram', 'Shiva', 'Durga', 'Ganesh', 'Radha',
+  'Morning', 'Evening', 'Aarti', 'Prarthana', 'Bhakti',
+  'Dashakam', 'Chalisa', 'Stotram', 'Kavach', 'Satsang'
+];
+
+export const SONG_BOOKS = [
+  'Ishi Chetana',
+  'Other'
+];

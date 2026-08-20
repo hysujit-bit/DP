@@ -112,8 +112,12 @@ export default function MembersList() {
           filtered.map(m => (
             <button key={m.id} onClick={() => navigate(`/members/${m.id}`)}
               className={`w-full bg-white border rounded-xl p-4 hover:shadow-md transition-all text-left flex items-center gap-3 ${m.isRemoved ? 'opacity-60 border-dashed' : 'border-gray-100 hover:border-sky-100'}`}>
-              <div className="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-bold text-sm flex-shrink-0">
-                {m.name.charAt(0)}
+              <div className="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-bold text-sm flex-shrink-0 overflow-hidden">
+                {m.photoUrl ? (
+                  <img src={m.photoUrl} alt={m.name} className="w-full h-full object-cover" />
+                ) : (
+                  m.name.charAt(0)
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

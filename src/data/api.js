@@ -183,3 +183,31 @@ export async function updateSubscription(id, data) {
 export async function deleteSubscription(id) {
   return request(`/magazines?id=${id}`, { method: 'DELETE' });
 }
+
+// ─── Songs ────────────────────────────────────────────────────────────────────
+export async function getSongs(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.category) params.set('category', filters.category);
+  if (filters.language) params.set('language', filters.language);
+  if (filters.q) params.set('q', filters.q);
+  if (filters.tag) params.set('tag', filters.tag);
+  if (filters.book) params.set('book', filters.book);
+  const q = params.toString();
+  return request(`/songs${q ? '?' + q : ''}`);
+}
+
+export async function getSong(id) {
+  return request(`/songs?id=${id}`);
+}
+
+export async function createSong(data) {
+  return request('/songs', { method: 'POST', body: data });
+}
+
+export async function updateSong(id, data) {
+  return request(`/songs?id=${id}`, { method: 'PATCH', body: data });
+}
+
+export async function deleteSong(id) {
+  return request(`/songs?id=${id}`, { method: 'DELETE' });
+}

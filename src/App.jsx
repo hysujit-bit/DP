@@ -19,6 +19,9 @@ import DPPortalStatus from './pages/DPPortalStatus';
 import MySpace from './pages/MySpace';
 import Reports from './pages/Reports';
 import MagazineSubscription from './pages/MagazineSubscription';
+import SongsList from './pages/SongsList';
+import SongDetail from './pages/SongDetail';
+import AddEditSong from './pages/AddEditSong';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user } = useApp();
@@ -51,6 +54,10 @@ function AppRoutes() {
         <Route path="definitions" element={<Definitions />} />
         <Route path="reports" element={<Reports />} />
         <Route path="magazines" element={<MagazineSubscription />} />
+        <Route path="songs" element={<SongsList />} />
+        <Route path="songs/new" element={<AddEditSong />} />
+        <Route path="songs/:id" element={<SongDetail />} />
+        <Route path="songs/:id/edit" element={<AddEditSong />} />
         <Route path="admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
       </Route>
     </Routes>

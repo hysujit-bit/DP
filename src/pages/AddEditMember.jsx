@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { MEMBER_CATEGORIES, DP_STATUSES, ISHTABHRITY_STATUSES, SUKS } from '../constants';
 import { ArrowLeft, Save, History, Navigation, Loader2 } from 'lucide-react';
 import AuditLog from '../components/AuditLog';
+import PhotoUpload from '../components/PhotoUpload';
 
 const BLANK = {
   name: '', serialNo: '', contactNo: '', alternatePhone: '', familyCode: '', guardianName: '', ritwikName: '',
@@ -22,6 +23,7 @@ const BLANK = {
   swastaini: false, newInBengaluru: false,
   profession: '',
   area: '', pinCode: '', permanentAddress: '', presentAddress: '', geoLocation: '',
+  photoUrl: '',
 };
 
 const ISHTA_ELIGIBLE_STATUSES = ['REGULAR', 'IRREGULAR', 'NEW'];
@@ -182,6 +184,17 @@ export default function AddEditMember() {
         {/* Personal */}
         <div className="p-5 space-y-4">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Personal Details</h2>
+          
+          {/* Profile Photo */}
+          <div className="flex justify-center">
+            <PhotoUpload
+              value={form.photoUrl}
+              onChange={(url) => setForm(f => ({ ...f, photoUrl: url || '' }))}
+              name={form.name || 'New Member'}
+              size="lg"
+            />
+          </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-1 sm:col-span-2"><Field label="Full Name" required><input value={form.name} onChange={set('name')} required placeholder="e.g. Ramesh Kumar" className={inp} /></Field></div>
             <Field label="Serial No"><input value={form.serialNo} onChange={set('serialNo')} placeholder="e.g. 042" className={inp} /></Field>
